@@ -1,62 +1,102 @@
-"""Работа с категориями расходов"""
-from typing import Dict, List, NamedTuple
+"""Модуль для работы с таблицей категорий"""
+import sqlite3
+from typing import Dict, List, NamedTuple, Tuple
+from dataclasses import dataclass
 
-import db
+from db_modules.db import DataBase
+from pkg import get_most_similar_strings
+
+db = DataBase()
 
 
-class Category(NamedTuple):
+ALIASES_TABLE_NAME = "product_aliases"
+UNNAMED_PRODUCT_NAME = "unnamed"
+
+
+class NameAliases(NamedTuple):
     """Структура категории"""
-    codename: str
     name: str
-    is_base_expense: bool
-    aliases: List[str]
+    aliases: Tuple[str]
 
 
-class Categories:
-    def __init__(self):
-        self._categories = self._load_categories()
+def _get_products_from_table() -> dict:
+    cursor = db.cursor
+    cursor.execute(f"select name, GROUP_CONCAT(alias) as list from {ALIASES_TABLE_NAME} group by name")
+    result = cursor.fetchall()
+    """Возвращает справочник категорий расходов из БД"""
 
-    def _load_categories(self) -> List[Category]:
-        """Возвращает справочник категорий расходов из БД"""
-        categories = db.fetchall(
-            "category", "codename name is_base_expense aliases".split()
+    product_names_by_names = {}
+    for name, aliases in result:
+        aliases = aliases.split(",")
+        aliases = list(filter(None, map(str.strip, aliases)))
+        product_names_by_names[name] = NameAliases(
+            name=name,
+            aliases=tuple(aliases)
         )
-        categories = self._fill_aliases(categories)
-        return categories
+    return product_names_by_names
 
-    def _fill_aliases(self, categories: List[Dict]) -> List[Category]:
-        """Заполняет по каждой категории aliases, то есть возможные
-        названия этой категории, которые можем писать в тексте сообщения.
-        Например, категория «кафе» может быть написана как cafe,
-        ресторан и тд."""
-        categories_result = []
-        for index, category in enumerate(categories):
-            aliases = category["aliases"].split(",")
-            aliases = list(filter(None, map(str.strip, aliases)))
-            aliases.append(category["codename"])
-            aliases.append(category["name"])
-            categories_result.append(Category(
-                codename=category['codename'],
-                name=category['name'],
-                is_base_expense=category['is_base_expense'],
-                aliases=aliases
-            ))
-        return categories_result
 
-    def get_all_categories(self) -> List[Dict]:
-        """Возвращает справочник категорий."""
-        return self._categories
+def _del_alias(alias: str, product_name: str):
+    db.delete(ALIASES_TABLE_NAME, {"name": product_name, "alias": alias})
 
-    def get_category(self, category_name: str) -> Category:
-        """Возвращает категорию по одному из её алиасов."""
-        finded = None
-        other_category = None
-        for category in self._categories:
-            if category.codename == "other":
-                other_category = category
-            for alias in category.aliases:
-                if category_name in alias:
-                    finded = category
-        if not finded:
-            finded = other_category
-        return finded
+
+def name_aliases_by_name() -> dict:
+    cursor = db.cursor
+    query = f"SELECT name, GROUP_CONCAT(alias) as list FROM {ALIASES_TABLE_NAME} GROUP BY name"
+    cursor.execute(query)
+    result = cursor.fetchall()
+    name_aliases_by_name = {}
+    for row in result:
+        name, aliases = row
+        aliases = aliases.split(",")
+        aliases = list(filter(None, map(str.strip, aliases)))
+        name_aliases_by_name[name] = NameAliases(name=name, aliases=tuple(aliases))
+    return name_aliases_by_name
+
+
+def add_alias(alias: str, product_name: str=UNNAMED_PRODUCT_NAME):
+    try:
+        db.insert(ALIASES_TABLE_NAME,
+                  {"name": product_name, "alias": alias})
+    except sqlite3.IntegrityError as e:
+        return
+
+
+def get_product_names(self) -> List[Dict]:
+    """Возвращает справочник категорий."""
+    return list(self.name_aliases_by_name.values())
+
+
+def get_product_by_alias(alias: str) -> NameAliases:
+    """Возвращает категорию по одному из её алиасов."""
+    for product in name_aliases_by_name().values():
+        if alias in product.aliases:
+            return product
+    db.insert(ALIASES_TABLE_NAME, {"name": UNNAMED_PRODUCT_NAME, "alias": alias})
+    return name_aliases_by_name()[UNNAMED_PRODUCT_NAME]
+
+
+def get_names_most_similar(name, length: int):
+    names = list(name_aliases_by_name().keys())
+    return get_most_similar_strings(name, names)[:length]
+
+
+def _get_named_aliases():
+    cursor = db.cursor
+    query = f"SELECT alias FROM {ALIASES_TABLE_NAME} WHERE name != ?"
+    cursor.execute(query, (UNNAMED_PRODUCT_NAME, ))
+    result = cursor.fetchall()
+    aliases = set()
+    for row in result:
+        aliases.add(row[0])
+    return aliases
+
+
+def get_aliases_most_similar(name, length: int):
+    aliases = _get_named_aliases()
+    return get_most_similar_strings(name, list(aliases))[:length]
+
+
+def set_new_name_to_alias(alias: str, product_name: str, old_product_name: str= UNNAMED_PRODUCT_NAME):
+    _del_alias(alias, old_product_name)
+    add_alias(alias, product_name)
