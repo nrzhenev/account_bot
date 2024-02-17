@@ -115,5 +115,5 @@ if __name__ == '__main__':
     #asyncio.run(ps.async_init())
     #pre_initialize()
     start_polling()
-    os.remove("/home/rzhenev/personal/account_bot/db/finance.db")
+    #os.remove("/home/rzhenev/personal/account_bot/db/finance.db")
     print(1)
