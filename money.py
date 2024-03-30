@@ -1,11 +1,21 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
 from db_modules.db import DataBase
+from typing import List
+from aiogram.dispatcher.filters.state import StatesGroup, State
 
 db = DataBase()
 
 
+
 def add_storage(user: str, initial_amount: float=0):
     db.insert("money", {"user_name": user, "amount": initial_amount})
+
+
+def get_money_recepients() -> List[str]:
+    cursor = db.cursor
+    cursor.execute("select user_name from money")
+    rows = cursor.fetchall()
+    return [row[0] for row in rows]
 
 
 def get_balance(user: str) -> float:

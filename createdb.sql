@@ -5,16 +5,19 @@ create table users(
     UNIQUE (user_id)
 );
 
+
 create table money(
     user_name varchar(40),
     amount float,
     UNIQUE (user_name)
 );
 
+
 create table categories(
     category varchar(80),
     type varchar(40),
     UNIQUE (category, type));
+
 
 create table category_links(
     target varchar(40),
@@ -22,6 +25,7 @@ create table category_links(
     --UNIQUE (target, category),
     FOREIGN KEY(category) REFERENCES categories(category)
 );
+
 
 --create table product_aliases(
 --    product_name varchar(80),
@@ -31,31 +35,60 @@ create table category_links(
 --);
 
 
-create table product_changes(
-    product_id integer primary key,
-    quantity float,
-    user_id integer,
-    date datetime,
-    FOREIGN KEY(product_id) REFERENCES product(id),
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
-);
-
-
 create table products(
     id integer primary key,
     name varchar(80),
     measurement_unit varchar(3)
 );
 
+
+create table messages(
+    user_id integer,
+    created datetime,
+    message text,
+    FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+
+
+create table actions(
+    action_id integer primary key,
+    user_id integer,
+    action_type varchar(40),
+    comment varchar(500),
+    created datetime,
+    FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+
+
+create table expense(
+    id integer primary key,
+    amount integer,
+    category varchar(40),
+    action_id integer,
+    FOREIGN KEY(category) REFERENCES categories(category),
+    FOREIGN KEY(action_id) REFERENCES action_id(action_id)
+);
+
+
+create table product_changes(
+    product_id integer primary key,
+    quantity float,
+    action_id integer,
+    FOREIGN KEY(product_id) REFERENCES product(id),
+    FOREIGN KEY(action_id) REFERENCES action_id(action_id)
+);
+
+
 INSERT INTO products (name, measurement_unit)
 VALUES
-('лосось хороший', 'кг'),
-('лосось плохой', 'кг'),
+('лосось филе', 'кг'),
+('лосось целый', 'кг'),
 ('угорь', 'кг'),
 ('креветки', 'кг'),
 ('тунец', 'кг'),
 ('тобико', 'кг'),
 ('Кольца кальмара', 'г'),
+('Луковые кольца', 'г'),
 ('Курица', 'кг'),
 ('Яйца', 'шт'),
 ('Краб палочки', 'кг'),
@@ -70,14 +103,14 @@ VALUES
 ('огурцы', 'кг'),
 ('Лук листья', 'г'),
 ('лук головки', 'кг'),
-('чеснок', 'кг'),
+('чеснок', 'г'),
 ('Имбирь корень', 'г'),
-('Перец любой', 'шт'),
+('Перец любой', 'г'),
 ('Кабачок', 'г'),
-('Манго', 'кг'),
+('Манго', 'г'),
 ('Апельсин', 'кг'),
-('Лайм', 'кг'),
-('Лимон', 'кг'),
+('Лайм', 'г'),
+('Лимон', 'г'),
 ('Хлеб', 'г'),
 ('Рис', 'кг'),
 ('Нори', 'шт'),
@@ -96,10 +129,10 @@ VALUES
 ('Уксус', 'мл'),
 ('Сливки', 'мл'),
 ('Пельмени', 'кг'),
-('Булгур', 'г'),
-('Гречка', 'г'),
-('Макароны', 'г'),
-('Сосиски', 'г'),
+('Булгур', 'кг'),
+('Гречка', 'кг'),
+('Макароны', 'кг'),
+('Сосиски', 'кг'),
 ('Сметана', 'г'),
 ('Соль', 'г'),
 ('Сахар', 'г'),
@@ -170,7 +203,7 @@ VALUES
 ('шампиньоны', 'г'),
 ('брокколи', 'г'),
 ('картофель', 'кг'),
-('шрирача', 'л'),
+('шрирача', 'мл'),
 ('кинза', 'г'),
 ('Зелень', 'г'),
 ('Овсянка', 'г'),
@@ -208,7 +241,7 @@ VALUES
 ('Средство для чистки фритюра', 'г'),
 ('Очиститель для слива', 'мл'),
 ('jameson', 'л'),
-('ликер Batldedecoco', 'л'),
+--('ликер Batldedecoco', 'л'),
 ('водка финляндия', 'л'),
 ('Специи для глинтвейна', 'г'),
 ('Швабра', 'шт'),
@@ -244,7 +277,6 @@ VALUES
 --('Средство для чистки фритюра', 'г'),
 --('Очиститель для слива', 'мл'),
 --('jameson', 'л'),
---('ликер Batldedecoco', 'л'),
 --('водка финляндия', 'л'),
 --('Специи для глинтвейна', 'г'),
 --('Швабра', 'шт'),
@@ -254,13 +286,9 @@ VALUES
 
 INSERT INTO category_links (category, target)
 VALUES
---Первый уровень
-
-
---Второй уровень
 ('Кухня', 'Мясо и рыба'),
-("Мясо и рыба", 'лосось хороший'),
-("Мясо и рыба", 'лосось плохой'),
+("Мясо и рыба", 'лосось филе'),
+("Мясо и рыба", 'лосось целый'),
 ("Мясо и рыба", 'угорь'),
 ("Мясо и рыба", 'тунец'),
 ("Мясо и рыба", 'Краб палочки'),
@@ -268,7 +296,6 @@ VALUES
 ("Мясо и рыба", 'тобико'),
 ("Мясо и рыба", 'Курица'),
 ("Мясо и рыба", 'Краб палочки'),
-('Мясо и рыба', 'Кольца кальмара'),
 
 ('Кухня', 'Овощи и фрукты'),
 ('Овощи и фрукты', 'Кукуруза консервированная'),
@@ -304,6 +331,11 @@ VALUES
 ('Рассыпчатое или мягкое', 'Кунжут'),
 ('Рассыпчатое или мягкое', 'Соль'),
 ('Рассыпчатое или мягкое', 'Сахар'),
+
+('Кухня', 'Жареное'),
+('Жареное', 'Кольца кальмара'),
+('Жареное', 'Луковые кольца'),
+('Жареное', 'Хлеб'),
 
 ('Кухня', 'Жидкости'),
 ('Жидкости', 'шрирача'),
@@ -415,16 +447,16 @@ VALUES
 
 
 ('Бар', 'Алкоголь'),
-('Алкоголь', 'Легкое'),
+('Алкоголь', 'Легкое (б)'),
 ('Легкое (б)', 'Guinness'),
 ('Легкое (б)', 'Kayaki'),
 ('Легкое (б)', 'Шампанское'),
 ('Легкое (б)', 'Мартини Бьянко'),
 ('Легкое (б)', 'Мартини Россо'),
-('Легкое (б)', 'ликер Batldedecoco'),
+--('Легкое (б)', 'ликер Batldedecoco'),
 ('Легкое (б)', 'Апероль'),
 --
-('Алкоголь', 'Крепкое'),
+('Алкоголь', 'Крепкое (б)'),
 ('Крепкое (б)', 'Ягер'),
 ('Крепкое (б)', 'Текила'),
 ('Крепкое (б)', 'Водка'),
@@ -480,19 +512,22 @@ VALUES
 --Для трат:
 ('Машина', 'Бензин'),
 ('Машина', 'Ремонт'),
+('Машина', 'Остальное'),
 
 ("Мириан", "Личное"),
 ("Мириан", "Еда Мириан"),
 
-("Продукты", "Фрукты и Овощи для продажи"),
-("Продукты", "Рыба и мясо для продажи"),
-("Продукты", "Остальная еда для продажи"),
-("Продукты", "Стафф еда"),
+("Основное", "Фрукты и Овощи"),
+("Основное", "Рыба и Мясо"),
+("Основное", "Нори, рис, уксусы, масло, соусы и тд"),
+("Основное", "Расходники (пакеты, палочки, перчатки, ручки ...)"),
+("Основное", "Моющие средства"),
+("Основное", "Стафф еда"),
 
-("Хозтоварыы", "Контейнеры/пакеты/крышки"),
-("Хозтоварыы", "Внеплановые (что-то сломалось/что-то новое)"),
-("Хозтоварыы", "Расходные материалы (покупаем периодически)");
-
+("Панда", "Стройматериалы"),
+("Панда", "Посуда"),
+("Панда", "Мебель"),
+("Панда", "Хозтовары на кухню или бар");
 
 INSERT INTO categories
 VALUES
@@ -517,13 +552,14 @@ VALUES
 ('Расходники (б)', "product_category"),
 ('Напитки (б)', "product_category"),
 ('Алкоголь', "product_category"),
-('Легкое', "product_category"),
-('Крепкое', "product_category"),
+('Легкое (б)', "product_category"),
+('Крепкое (б)', "product_category"),
 ('Хозтовары', "product_category"),
 ('Частые хозтовары', "product_category"),
 ('Редкие хозтовары', "product_category"),
 ('Редчайшее', "product_category"),
 ('Моющие средства и приборы', "product_category"),
+('Жареное', "product_category"),
 
 ('Кухня', "product_category_cook"),
 ('Мясо и рыба', "product_category_cook"),
@@ -546,41 +582,25 @@ VALUES
 --('Стафф', "product_category"),
 --('Другое', "product_category"),
 ('Машина', "expenses_category"),
-('Бензин', "expenses_category"),
 ("Мириан", "expenses_category"),
+("Основное", "expenses_category"),
+("Панда", "expenses_category"),
+("Стройматериалы", "expenses_category"),
+("Посуда", "expenses_category"),
+("Мебель", "expenses_category"),
+("Хозтовары на кухню или бар", "expenses_category"),
+('Бензин', "expenses_category"),
+('Ремонт', "expenses_category"),
+('Остальное', "expenses_category"),
 ("Личное", "expenses_category"),
-("Продукты", "expenses_category"),
-("Фрукты и Овощи для продажи", "expenses_category"),
-("Рыба и мясо для продажи", "expenses_category"),
-("Остальная еда для продажи", "expenses_category"),
-("Стафф еда", "expenses_category"),
-("Овощи", "expenses_category"),
-("Хозтоварыы", "expenses_category"),
-("Еда", "expenses_category"),
-('Мириан Личное', "expenses_category"),
 ("Еда Мириан", "expenses_category"),
-('Контейнеры/пакеты/крышки', "expenses_category"),
-('Внеплановые (что-то сломалось/что-то новое)', "expenses_category"),
-('Расходные материалы (покупаем периодически)', "expenses_category");
+("Фрукты и Овощи", "expenses_category"),
+("Рыба и Мясо", "expenses_category"),
+("Нори, рис, уксусы, масло, соусы и тд", "expenses_category"),
+("Расходники (пакеты, палочки, перчатки, ручки ...)", "expenses_category"),
+("Моющие средства", "expenses_category"),
+("Стафф еда", "expenses_category");
 
-
-
-
-create table messages(
-    user_id integer,
-    created datetime,
-    message text,
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
-);
-
-create table expense(
-    id integer primary key,
-    amount integer,
-    category varchar(40),
-    user_id integer,
-    created datetime,
-    FOREIGN KEY(category) REFERENCES categories(category)
-);
 
 --INSERT INTO product_aliases
 --VALUES
@@ -598,9 +618,10 @@ VALUES
 
 INSERT INTO users
 VALUES
-(358058423, 2, "Никита"),
+(358058423, 1, "Никита"),
 (1268471021, 1, "Мириан"),
 (368555562, 2, "Юля"),
 (5852542325, 2, "Коля"),
 (651083072, 3, "Миша"),
+(1605440975, 4, "Серёга"),
 (5389969711, 3, "Илья");

@@ -1,11 +1,15 @@
 import datetime
-from typing import List
+from typing import List, Optional
+from enum import Enum, auto
 
+import aiogram
 import pytz
 from Levenshtein import distance
 from aiogram import Bot, Dispatcher, types
+from aiogram.types import KeyboardButton
 from dateparser.search import search_dates
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+import re
 
 from db_modules.db import DataBase
 from credentials import TOKEN
@@ -18,9 +22,40 @@ ACCESS_IDS = IDS
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 dp.middleware.setup(AccessMiddleware(ACCESS_IDS))
+db = DataBase()
 
 
-def get_now_datetime() -> datetime.date:
+MONEY_VALUE_REGEX_STRING = "\d+[,.]?\d*"
+
+
+class ActionType(Enum):
+    EXPENSE = auto()
+    STAFF_WRITE_OFF = auto()
+    WRITE_OFF = auto()
+    RECEIVING = auto()
+
+
+def new_action_get_id(action_type: ActionType,
+                      user_id: int,
+                      date: Optional[datetime.date]=None,
+                      comment: Optional[str]=None) -> int:
+    if not comment:
+        comment = ""
+    if not date:
+        date = get_now_date()
+    db.insert("actions", {"action_type": action_type.name, "user_id": user_id,
+                          "created": date, "comment": comment})
+    return max(db.fetchall("actions", ["action_id"])["action_id"])
+
+
+async def verify_message_is_value(message) -> bool:
+    if not re.match(MONEY_VALUE_REGEX_STRING, message.text):
+        await message.answer("Сумма должна быть в формате 412.12 или 124,131 или 1241")
+        return False
+    return True
+
+
+def get_now_date() -> datetime.date:
     """Возвращает сегодняшний datetime с учётом времненной зоны Мск."""
     tz = pytz.timezone("Asia/Tbilisi")
     now = datetime.datetime.now(tz)
@@ -29,7 +64,7 @@ def get_now_datetime() -> datetime.date:
 
 def get_now_formatted() -> str:
     """Возвращает сегодняшнюю дату строкой"""
-    return get_now_datetime().strftime("%Y-%m-%d")
+    return get_now_date().strftime("%Y-%m-%d")
 
 
 def save_message(db: DataBase, message: types.Message):
@@ -97,3 +132,10 @@ def calc_dist(str1: str, str2: str):
 def get_most_similar_strings(string: str, list_of_strings: List[str]):
     list_of_strings = sorted(list_of_strings, key=lambda string: len(string), reverse=True)
     return sorted(list_of_strings, key=lambda string2: calc_dist(string, string2))
+
+
+def get_keyboard(texts: List[str], one_time: bool=False):
+    keyboard = aiogram.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=one_time)
+    buttons = [KeyboardButton(text=text) for text in texts]
+    keyboard.add(*buttons)
+    return keyboard

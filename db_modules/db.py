@@ -2,6 +2,7 @@ import os
 
 import sqlite3
 from typing import Dict, List, Tuple
+from collections import defaultdict
 
 
 LOCAL_DB_NAME = "db/finance.db"
@@ -46,16 +47,15 @@ class DataBase:
             (new_dict[change_col], new_dict[search_col]))
         self.conn.commit()
 
-    def fetchall(self, table: str, columns: List[str]) -> List[Tuple]:
+    def fetchall(self, table: str, columns: List[str]) -> dict:
         columns_joined = ", ".join(columns)
         self.cursor.execute(f"SELECT {columns_joined} FROM {table}")
         rows = self.cursor.fetchall()
-        result = []
+        result = defaultdict(list)
         for row in rows:
-            dict_row = {}
             for index, column in enumerate(columns):
-                dict_row[column] = row[index]
-            result.append(dict_row)
+                #dict_row[column] =
+                result[column].append(row[index])
         return result
 
     def delete(self, table: str, value_by_column: dict) -> None:

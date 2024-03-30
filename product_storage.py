@@ -6,7 +6,7 @@ import datetime
 from collections import defaultdict
 
 from db_modules.db import DataBase
-from pkg import get_now_datetime
+from pkg import get_now_date, new_action_get_id, ActionType
 
 db = DataBase()
 
@@ -191,7 +191,7 @@ def get_product_changes() -> dict:
     result = defaultdict(lambda: defaultdict(list))
     # cursor.execute("select id, name, measurement_unit, quantity from product_storage")
     cursor.execute(
-        "select product_id, quantity, user_id, date from product_changes")
+        "select product_id, quantity, user_id, created from product_changes pc join actions a on pc.action_id = a.action_id")
     rows = cursor.fetchall()
     for row in rows:
         result[row[3]][row[2]].append(ProductVolume(row[0], row[1]))
@@ -235,6 +235,15 @@ def get_product_by_name(product_name: str) -> Optional[Product]:
     return Product(*result)
 
 
+def get_products() -> List[Product]:
+    cursor = db.cursor
+    cursor.execute("select p.id, p.name, p.measurement_unit from products p")
+    rows = cursor.fetchall()
+    if not rows:
+        return []
+    return [Product(*row) for row in rows]
+
+
 def get_product_by_id(product_id: int) -> Optional[Product]:
     cursor = db.cursor
     cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.id = (?) group by p.id",
@@ -255,21 +264,28 @@ def get_product_by_id_v0(product_id: int) -> Optional[Product]:
     return Product(*result)
 
 
-def increment(product_name: str, increment: float, user_id: int):
+def increment(product_name: str, increment: float, action_id: int):
     product = get_product_in_storage_by_name(product_name)
     if not product:
         return
 
     quantity = product.quantity + increment
-    db.insert("product_changes", {"product_id": product.product_id, "quantity": quantity, "user_id": user_id, "date": get_now_datetime()})
+    db.insert("product_changes", {"product_id": product.product_id, "quantity": quantity, "action_id": action_id})
     #db.delete("product_storage", {"name": product.name})
     #add_product(product.name, product.measurement_unit, quantity)
 
 
-def increment_products(increments: List[ProductVolume], user_id: int):
+def increment_products(increments: List[ProductVolume],
+                       user_id: int,
+                       action_type: ActionType,
+                       date: datetime.date=get_now_date(),
+                       comment: str=None):
+    if not comment:
+        comment = ""
+    action_id = new_action_get_id(action_type, user_id, date=date, comment=comment)
     for inc in increments:
         product = get_product_by_id(inc.product_id)
-        increment(product.name, inc.quantity, user_id)
+        increment(product.name, inc.quantity, action_id)
 
 
 def volumes_string(volumes: List[ProductVolume]) -> str:

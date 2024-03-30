@@ -19,23 +19,6 @@ class NameAliases(NamedTuple):
     aliases: Tuple[str]
 
 
-def _get_products_from_table() -> dict:
-    cursor = db.cursor
-    cursor.execute(f"select name, GROUP_CONCAT(alias) as list from {ALIASES_TABLE_NAME} group by name")
-    result = cursor.fetchall()
-    """Возвращает справочник категорий расходов из БД"""
-
-    product_names_by_names = {}
-    for name, aliases in result:
-        aliases = aliases.split(",")
-        aliases = list(filter(None, map(str.strip, aliases)))
-        product_names_by_names[name] = NameAliases(
-            name=name,
-            aliases=tuple(aliases)
-        )
-    return product_names_by_names
-
-
 def _del_alias(alias: str, product_name: str):
     db.delete(ALIASES_TABLE_NAME, {"name": product_name, "alias": alias})
 
