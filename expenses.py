@@ -140,7 +140,7 @@ def expenses_string(expenses: List[Expense]):
     result = ""
     for user_id in result_dict:
         user = users.get_user_by_id(user_id)
-        result += f"{user.name}:\n"
+        result += f"\n\n{user.name}:\n"
         for created in result_dict[user_id]:
             result += created + ":\n"
             for category in result_dict[user_id][created]:
