@@ -228,7 +228,7 @@ async def send_shipment(message: types.Message, state: FSMContext):
         await message.answer("Вы не ввели траты", reply_markup=keyboard)
     else:
         for expense in expenses:
-            expenses_module.add_expense(expense, comment=comment)
+            expenses_module.add_expense(expense, get_now_date(), comment=comment)
         #await ps.increment_products(product_increments)
         await state.reset_state()
         keyboard = get_initial_keyboard()

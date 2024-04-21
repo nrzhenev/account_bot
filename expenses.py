@@ -38,7 +38,7 @@ class Expense:
 
 
 def add_expense(expense: Expense,
-                date: datetime.date=get_now_date(),
+                date: datetime.date,
                 comment: Optional[str]=None):
     if not comment:
         comment = ""
