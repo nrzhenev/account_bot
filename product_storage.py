@@ -1,5 +1,5 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
-from typing import NamedTuple, Optional, List, Tuple
+from typing import NamedTuple, Optional, List, Tuple, Union
 
 import regex as re
 import datetime
@@ -125,6 +125,11 @@ class Product(NamedTuple):
 
 class ProductVolume(NamedTuple):
     product_id: int
+    quantity: float
+
+
+class ProductVolume2(NamedTuple):
+    product: Product
     quantity: float
 
 
@@ -275,6 +280,19 @@ def increment(product_name: str, increment: float, action_id: int):
     #add_product(product.name, product.measurement_unit, quantity)
 
 
+def get_product_changes_by_action_id(action_id: int) -> List[ProductVolume2]:
+    cursor = db.cursor
+    cursor.execute(
+        "select p.id, p.name, p.measurement_unit, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id where pc.action_id = (?) group by p.id",
+        (action_id,))
+    res = cursor.fetchall()
+    result = []
+    for row in res:
+        pid, pname, measurement_unit, quantity = row
+        result.append(ProductVolume2(Product(pid, pname, measurement_unit), quantity))
+    return result
+
+
 def increment_products(increments: List[ProductVolume],
                        user_id: int,
                        action_type: ActionType,
@@ -288,11 +306,18 @@ def increment_products(increments: List[ProductVolume],
         increment(product.name, inc.quantity, action_id)
 
 
-def volumes_string(volumes: List[ProductVolume]) -> str:
+def volumes_string(volumes: List[Union[ProductVolume, ProductVolume2]]) -> str:
     result = ""
-    for vol in volumes:
-        product = get_product_by_id(vol.product_id)
-        result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
+    if not volumes:
+        return result
+    if isinstance(volumes[0], ProductVolume):
+        for vol in volumes:
+            product = get_product_by_id(vol.product_id)
+            result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
+    elif isinstance(volumes[0], ProductVolume2):
+        for vol in volumes:
+            product = vol.product
+            result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
     return result
 
 

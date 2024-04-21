@@ -1,4 +1,5 @@
 import re
+import datetime
 
 import aiogram.types
 #import product_storage
@@ -16,7 +17,7 @@ import messages
 import money
 #import poster_storage as ps
 from handlers.roles import IsAdmin
-from pkg import dp, get_dates_from_string, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING
+from pkg import dp, get_dates_from_string, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING, get_now_date
 
 
 SENDERS = ["Счет", "Никита"]
@@ -24,6 +25,10 @@ SENDERS = ["Счет", "Никита"]
 
 class AdminStates(StatesGroup):
     INITIAL_STATE = State()
+
+
+class GetStatisticsStates(StatesGroup):
+    WAITING_TO_CHOOSE_ACTION = State()
 
 
 class UserStates(StatesGroup):
@@ -62,14 +67,22 @@ async def transfer_money(message: types.Message, state: FSMContext):
     await message.answer(text, reply_markup=keyboard)
 
 
-@dp.message_handler(lambda message: message.text == "Слежка", state=AdminStates.INITIAL_STATE)
-async def transfer_money(message: types.Message, state: FSMContext):
-    await ActionsStates.WAITING_ACTION.set()
-    acts = actions.get_today_actions()
-    result = ""
-    for act in acts:
-        result += str(act)
+@dp.message_handler(lambda message: message.text == "История действий", state=AdminStates.INITIAL_STATE)
+async def get_actions(message: types.Message, state: FSMContext):
+    #await ActionsStates.WAITING_ACTION.set()
+    acts = actions.get_actions_between_dates(get_now_date() - datetime.timedelta(days=200), get_now_date())
+    result = "Действия:\n"
+    # for act in acts:
+    #     result += str(act)
+    result += actions.actions_string(acts)
     await message.answer(result)
+
+
+@dp.message_handler(lambda message: message.text == "Статистика", state=AdminStates.INITIAL_STATE)
+async def get_actions(message: types.Message, state: FSMContext):
+    await GetStatisticsStates.WAITING_TO_CHOOSE_ACTION.set()
+    kb = get_keyboard(["Траты", "Списания"])
+    await message.answer("Выберите действие", reply_markup=kb)
 
 
 @dp.message_handler(state=MoneyTransfer.WAITING_SENDER_NAME)
@@ -116,7 +129,7 @@ async def transfer_money_waiting_quantity(message: types.Message, state: FSMCont
 
 def get_initial_keyboard():
     return get_keyboard(["balance", "expenses", "Пополнение счета", "storage_history", "storage", "Перевести деньги",
-                         "Слежка"])
+                         "История действий"])
 
 
 #

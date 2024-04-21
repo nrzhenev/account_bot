@@ -29,10 +29,10 @@ MONEY_VALUE_REGEX_STRING = "\d+[,.]?\d*"
 
 
 class ActionType(Enum):
-    EXPENSE = auto()
-    STAFF_WRITE_OFF = auto()
-    WRITE_OFF = auto()
-    RECEIVING = auto()
+    EXPENSE = "Траты"
+    STAFF_WRITE_OFF = "Списание стафф"
+    WRITE_OFF = "Списание"
+    RECEIVING = "Приемки"
 
 
 def new_action_get_id(action_type: ActionType,
