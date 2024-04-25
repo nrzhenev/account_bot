@@ -296,7 +296,7 @@ def get_product_changes_by_action_id(action_id: int) -> List[ProductVolume2]:
 def increment_products(increments: List[ProductVolume],
                        user_id: int,
                        action_type: ActionType,
-                       date: datetime.date=get_now_date(),
+                       date: datetime.date,
                        comment: str=None):
     if not comment:
         comment = ""

@@ -11,7 +11,7 @@ import product_storage
 from product_storage import ProductVolume
 #import poster_storage
 #from poster_storage import PosterStorage, ProductVolume, Product
-from pkg import dp, get_most_similar_strings, get_keyboard, verify_message_is_value, ActionType
+from pkg import dp, get_most_similar_strings, get_keyboard, verify_message_is_value, ActionType, get_now_date
 from handlers.roles import IsShipmentsRole
 
 
@@ -288,7 +288,10 @@ async def send_shipment(message: types.Message, state: FSMContext):
         keyboard = get_keyboard(["Ввести поставки"])
         await message.answer("Поставка пустая", reply_markup=keyboard)
     else:
-        product_storage.increment_products(product_increments, message.from_user.id, ActionType.RECEIVING)
+        product_storage.increment_products(product_increments,
+                                           message.from_user.id,
+                                           ActionType.RECEIVING,
+                                           get_now_date())
         #await ps.increment_products(product_increments)
         await state.update_data(product_increments=[])
         keyboard = get_initial_keyboard()
@@ -553,7 +556,10 @@ async def send_shipment(message: types.Message, state: FSMContext):
         keyboard = get_keyboard(["Ввести поставки"])
         await message.answer("Поставка пустая", reply_markup=keyboard)
     else:
-        product_storage.increment_products(product_increments, message.from_user.id, ActionType.RECEIVING)
+        product_storage.increment_products(product_increments,
+                                           message.from_user.id,
+                                           ActionType.RECEIVING,
+                                           date=get_now_date())
         #await ps.increment_products(product_increments)
         await state.update_data(product_increments=[])
         keyboard = get_initial_keyboard()

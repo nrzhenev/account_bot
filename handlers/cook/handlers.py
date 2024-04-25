@@ -14,7 +14,7 @@ import product_storage
 from product_storage import ProductVolume
 #import poster_storage
 #from poster_storage import PosterStorage, ProductVolume, Product
-from pkg import bot, dp, save_message, data_base, get_most_similar_strings, get_now_date, ActionType
+from pkg import dp, get_most_similar_strings, get_now_date, ActionType
 from handlers.roles import IsCookRole
 
 
@@ -262,7 +262,10 @@ async def send_shipment(message: types.Message, state: FSMContext):
         keyboard = get_keyboard(["Ввести списание"])
         await message.answer("Списание пусто", reply_markup=keyboard)
     else:
-        product_storage.increment_products(product_increments, message.from_user.id, ActionType.WRITE_OFF)
+        product_storage.increment_products(product_increments,
+                                           message.from_user.id,
+                                           ActionType.WRITE_OFF,
+                                           get_now_date())
         #await ps.increment_products(product_increments)
         await state.update_data(product_increments=[])
         keyboard = get_initial_keyboard()
@@ -459,6 +462,7 @@ async def send_shipment(message: types.Message, state: FSMContext):
         product_storage.increment_products(product_increments,
                                            message.from_user.id,
                                            ActionType.RECEIVING,
+                                           date=get_now_date(),
                                            comment=comment)
         #await ps.increment_products(product_increments)
         await state.update_data(product_increments=[])
