@@ -191,15 +191,48 @@ def get_products_in_storage(ids: Optional[List[int]]=None) -> List[ProductVolume
     return result
 
 
-def get_product_changes() -> dict:
+def get_product_changes(user_ids: List[int]=None,
+                        product_ids: List[int]=None,
+                        from_date: datetime.date=None,
+                        to_date: datetime.date=None) -> dict:
     cursor = db.cursor
     result = defaultdict(lambda: defaultdict(list))
     # cursor.execute("select id, name, measurement_unit, quantity from product_storage")
-    cursor.execute(
-        "select product_id, quantity, user_id, created from product_changes pc join actions a on pc.action_id = a.action_id")
+    user_ids_condition = ""
+    product_ids_condition = ""
+    date_from_condition = ""
+    date_to_condition = ""
+
+    variables = []
+    if user_ids:
+        variables += user_ids
+        user_ids_condition = f"user_id in ({', '.join(['?' for _ in user_ids])})"
+    if product_ids:
+        variables += product_ids
+        product_ids_condition = f"product_id in ({', '.join(['?' for _ in product_ids])})"
+    if from_date:
+        variables.append(from_date)
+        date_from_condition = f"created >= ? "
+    if to_date:
+        variables.append(to_date)
+        date_to_condition = f"created <= ?"
+
+    conditions_string = ' AND '.join([cond for cond in [user_ids_condition,
+                                                        product_ids_condition,
+                                                        date_from_condition,
+                                                        date_to_condition] if cond])
+
+    main_query = (f"select product_id, quantity, user_id," +
+                  f" created from product_changes pc join actions a on pc.action_id = a.action_id")
+    if variables:
+        cursor.execute(f"{main_query} WHERE {conditions_string}", variables)
+    else:
+        cursor.execute(main_query)
     rows = cursor.fetchall()
+    #result = []
     for row in rows:
-        result[row[3]][row[2]].append(ProductVolume(row[0], row[1]))
+        product_id, quantity, user_id, created_date = row
+        result[created_date][user_id].append(ProductVolume(product_id, quantity))
     return result
 
 

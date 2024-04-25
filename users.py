@@ -17,6 +17,21 @@ def add_storage(user: str, initial_amount: float=0):
     db.insert("money", {"user_name": user, "amount": initial_amount})
 
 
+def get_users(role_ids: List[int] = None) -> List[User]:
+    cursor = db.cursor
+    if role_ids is None:
+        cursor.execute("select name, user_id, current_role_id from users")
+    else:
+        placeholders = ', '.join(['?' for _ in role_ids])
+        cursor.execute(f"select name, user_id, current_role_id from users where current_role_id in ({placeholders})",
+                       role_ids)
+    rows = cursor.fetchall()
+    result = []
+    for name, user_id, current_role_id in rows:
+        result.append(User(user_id=user_id, current_role_id=current_role_id, name=name))
+    return result
+
+
 def get_user_by_id(user_id: int) -> Optional[User]:
     cursor = db.cursor
     cursor.execute("select name, user_id, current_role_id from users where user_id = (?)",
