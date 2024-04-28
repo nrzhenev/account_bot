@@ -63,6 +63,13 @@ def get_initial_keyboard():
 async def change_date(message: types.Message, state: FSMContext):
     try:
         arg = message.text.split()[1]
+        d = re.findall("\d", arg)
+        if len(d) == 8:
+            arg = f"{d[0]+d[1]}-{d[2]+d[3]}-{''.join(d[4:])}"
+        elif len(d) == 6:
+            arg = f"{d[0]+d[1]}-{d[2]+d[3]}-20{''.join(d[4:])}"
+        elif len(d) == 4:
+            arg = f"{d[0] + d[1]}-{d[2] + d[3]}-2024"
         date = get_dates_from_string(arg)[0]
     except:
         return
