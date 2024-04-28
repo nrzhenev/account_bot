@@ -11,8 +11,8 @@ import product_storage
 from product_storage import ProductVolume
 #import poster_storage
 #from poster_storage import PosterStorage, ProductVolume, Product
-from pkg import dp, get_most_similar_strings, get_keyboard, verify_message_is_value, ActionType, get_now_date
-from handlers.roles import IsShipmentsRole
+from pkg import dp, get_dates_from_string, get_most_similar_strings, get_keyboard, verify_message_is_value, ActionType, get_now_date_async
+from handlers.roles import IsShipmentsRole, IsAdmin
 
 
 PRODUCTS_RANGE = 3
@@ -59,9 +59,20 @@ def get_initial_keyboard():
 #     await message.answer("Выберите действие", reply_markup=keyboard)
 
 
+@dp.message_handler(IsShipmentsRole(), commands=["cd"], state="*")
+async def change_date(message: types.Message, state: FSMContext):
+    try:
+        arg = message.text.split()[1]
+        date = get_dates_from_string(arg)[0]
+    except:
+        return
+    await state.update_data(date=date.date())
+    await message.answer(f"Поменял дату на {date.strftime('%d-%m-%y')}")
+
+
 @dp.message_handler(IsShipmentsRole(), state=None)
 async def barmen_start(message: types.Message, state: FSMContext):
-    await state.reset_state()
+    await state.reset_state(with_data=False)
     await BarmenStates.INITIAL_STATE.set()
     keyboard = get_initial_keyboard()
     await message.answer("Выберите действие", reply_markup=keyboard)
@@ -70,6 +81,14 @@ async def barmen_start(message: types.Message, state: FSMContext):
 @dp.message_handler(IsShipmentsRole(), commands=["start"], state="*")
 async def barmen_start_2(message: types.Message, state: FSMContext):
     await state.reset_state()
+    await BarmenStates.INITIAL_STATE.set()
+    keyboard = get_initial_keyboard()
+    await message.answer("Выберите действие", reply_markup=keyboard)
+
+
+@dp.message_handler(IsShipmentsRole(), commands=["s"], state="*")
+async def barmen_start_2(message: types.Message, state: FSMContext):
+    await state.reset_state(with_data=False)
     await BarmenStates.INITIAL_STATE.set()
     keyboard = get_initial_keyboard()
     await message.answer("Выберите действие", reply_markup=keyboard)
@@ -288,10 +307,11 @@ async def send_shipment(message: types.Message, state: FSMContext):
         keyboard = get_keyboard(["Ввести поставки"])
         await message.answer("Поставка пустая", reply_markup=keyboard)
     else:
+        date = await get_now_date_async(state)
         product_storage.increment_products(product_increments,
                                            message.from_user.id,
                                            ActionType.RECEIVING,
-                                           get_now_date())
+                                           date)
         #await ps.increment_products(product_increments)
         await state.update_data(product_increments=[])
         keyboard = get_initial_keyboard()
@@ -556,10 +576,11 @@ async def send_shipment(message: types.Message, state: FSMContext):
         keyboard = get_keyboard(["Ввести поставки"])
         await message.answer("Поставка пустая", reply_markup=keyboard)
     else:
+        date = await get_now_date_async(state)
         product_storage.increment_products(product_increments,
                                            message.from_user.id,
                                            ActionType.RECEIVING,
-                                           date=get_now_date())
+                                           date)
         #await ps.increment_products(product_increments)
         await state.update_data(product_increments=[])
         keyboard = get_initial_keyboard()

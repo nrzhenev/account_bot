@@ -56,10 +56,18 @@ async def verify_message_is_value(message) -> bool:
 
 
 def get_now_date() -> datetime.date:
-    """Возвращает сегодняшний datetime с учётом времненной зоны Мск."""
     tz = pytz.timezone("Asia/Tbilisi")
     now = datetime.datetime.now(tz)
     return now.date()
+
+
+async def get_now_date_async(state) -> datetime.date:
+    # Получение данных из контекста пользователя
+    data = await state.get_data()
+    date = data.get("date")
+    if not date:
+        return get_now_date()
+    return date
 
 
 def get_now_formatted() -> str:
