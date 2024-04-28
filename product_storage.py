@@ -307,8 +307,8 @@ def increment(product_name: str, increment: float, action_id: int):
     if not product:
         return
 
-    quantity = product.quantity + increment
-    db.insert("product_changes", {"product_id": product.product_id, "quantity": quantity, "action_id": action_id})
+    #quantity = product.quantity + increment
+    db.insert("product_changes", {"product_id": product.product_id, "quantity": increment, "action_id": action_id})
     #db.delete("product_storage", {"name": product.name})
     #add_product(product.name, product.measurement_unit, quantity)
 

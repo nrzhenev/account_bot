@@ -70,8 +70,8 @@ create table if not exists expense(
 );
 
 
-create table product_changes(
-    product_id integer primary key,
+create table if not exists product_changes(
+    product_id integer,
     quantity float,
     action_id integer,
     FOREIGN KEY(product_id) REFERENCES product(id),
