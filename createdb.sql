@@ -1,4 +1,4 @@
-create table users(
+create table if not exists users(
     user_id integer,
     current_role_id integer,
     name text,
@@ -6,20 +6,20 @@ create table users(
 );
 
 
-create table money(
+create table if not exists money(
     user_name varchar(40),
     amount float,
     UNIQUE (user_name)
 );
 
 
-create table categories(
+create table if not exists categories(
     category varchar(80),
     type varchar(40),
     UNIQUE (category, type));
 
 
-create table category_links(
+create table if not exists category_links(
     target varchar(40),
     category varchar(80),
     --UNIQUE (target, category),
@@ -35,14 +35,14 @@ create table category_links(
 --);
 
 
-create table products(
+create table if not exists products(
     id integer primary key,
     name varchar(80),
     measurement_unit varchar(3)
 );
 
 
-create table messages(
+create table if not exists messages(
     user_id integer,
     created datetime,
     message text,
@@ -50,7 +50,7 @@ create table messages(
 );
 
 
-create table actions(
+create table if not exists actions(
     action_id integer primary key,
     user_id integer,
     action_type varchar(40),
@@ -60,7 +60,7 @@ create table actions(
 );
 
 
-create table expense(
+create table if not exists expense(
     id integer primary key,
     amount integer,
     category varchar(40),
@@ -621,7 +621,7 @@ VALUES
 
 INSERT INTO users
 VALUES
-(358058423, 1, "Никита"),
+(358058423, 0, "Никита"),
 (1268471021, 1, "Мириан"),
 (368555562, 2, "Юля"),
 (5852542325, 2, "Коля"),
