@@ -293,7 +293,7 @@ async def storage_history_add_restriction_date(message: types.Message):
         await message.answer("Нет поступлений", reply_markup=get_initial_keyboard())
         return
     answer_string = ""
-    for date in changes:
+    for date in sorted(changes):
         answer_string += date
         for user_id in changes[date]:
             user = get_user_by_id(user_id)
@@ -345,7 +345,7 @@ async def storage_history_show(message: types.Message, state: FSMContext):
         return
 
     answer_string = ""
-    for date in changes:
+    for date in sorted(changes):
         answer_string += f"\n\n<b>{date}</b>"
         for user_id in changes[date]:
             user = get_user_by_id(user_id)
