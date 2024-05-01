@@ -1,12 +1,12 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
-from typing import NamedTuple, Optional, List, Tuple, Union
-
-import regex as re
 import datetime
 from collections import defaultdict
+from typing import NamedTuple, Optional, List, Tuple
+
+import regex as re
 
 from db_modules.db import DataBase
-from pkg import get_now_date, new_action_get_id, ActionType
+from pkg import new_action_get_id, ActionType
 
 db = DataBase()
 
@@ -123,6 +123,13 @@ class Product(NamedTuple):
     measurement_unit: str
 
 
+class ProductWithPrice(NamedTuple):
+    id: int
+    name: str
+    measurement_unit: str
+    price: float
+
+
 class ProductVolume(NamedTuple):
     product_id: int
     quantity: float
@@ -130,6 +137,11 @@ class ProductVolume(NamedTuple):
 
 class ProductVolume2(NamedTuple):
     product: Product
+    quantity: float
+
+
+class ProductVolumeWithPrice(NamedTuple):
+    product: ProductWithPrice
     quantity: float
 
 
@@ -232,7 +244,8 @@ def get_product_changes(user_ids: List[int]=None,
     #result = []
     for row in rows:
         product_id, quantity, user_id, created_date = row
-        result[created_date][user_id].append(ProductVolume(product_id, quantity))
+        product = get_product_by_id(product_id)
+        result[created_date][user_id].append(ProductVolumeWithPrice(product, quantity))
     return result
 
 
@@ -282,14 +295,14 @@ def get_products() -> List[Product]:
     return [Product(*row) for row in rows]
 
 
-def get_product_by_id(product_id: int) -> Optional[Product]:
+def get_product_by_id(product_id: int) -> Optional[ProductWithPrice]:
     cursor = db.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.id = (?) group by p.id",
+    cursor.execute("select p.id, p.name, p.measurement_unit, p.price from products p where p.id = (?) group by p.id",
                    (product_id,))
     result = cursor.fetchone()
     if not result:
         return
-    return Product(*result)
+    return ProductWithPrice(*result)
 
 
 def get_product_by_id_v0(product_id: int) -> Optional[Product]:
@@ -339,18 +352,28 @@ def increment_products(increments: List[ProductVolume],
         increment(product.name, inc.quantity, action_id)
 
 
-def volumes_string(volumes: List[Union[ProductVolume, ProductVolume2]]) -> str:
+def volumes_cost_sum(volumes: List[ProductVolumeWithPrice]) -> float:
+    sum_price = 0
+    for vol in volumes:
+        sum_price += vol.quantity * vol.product.price
+    return sum_price
+
+
+def volumes_string(volumes: List[ProductVolumeWithPrice]) -> str:
     result = ""
     if not volumes:
         return result
-    if isinstance(volumes[0], ProductVolume):
-        for vol in volumes:
-            product = get_product_by_id(vol.product_id)
-            result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
-    elif isinstance(volumes[0], ProductVolume2):
-        for vol in volumes:
-            product = vol.product
-            result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
+    # if isinstance(volumes[0], ProductVolume):
+    #     for vol in volumes:
+    #         product = get_product_by_id(vol.product_id)
+    #         result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
+    # elif isinstance(volumes[0], ProductVolume2):
+    #     for vol in volumes:
+    #         product = vol.product
+    #         result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
+    for vol in volumes:
+        product = vol.product
+        result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
     return result
 
 

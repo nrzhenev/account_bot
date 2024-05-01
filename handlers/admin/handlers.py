@@ -1,25 +1,23 @@
-import re
 import datetime
+import re
 
-import aiogram.types
-#import product_storage
+# import product_storage
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-import product_storage
+import actions
 from users import get_user_by_id
-import users
 import categories as categories_module
 import expenses
-import actions
-import messages
 import money
-#import poster_storage as ps
+import product_storage
+import users
+from auxiliary.system_functions import TEXT_PARSERS
+# import poster_storage as ps
 from handlers.roles import IsAdmin
-from pkg import dp, get_dates_from_string, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING, get_now_date
-
+from pkg import dp, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING, get_now_date
 
 SENDERS = ["Счет", "Никита"]
 
@@ -343,8 +341,10 @@ async def storage_history_show(message: types.Message, state: FSMContext):
     if not changes:
         await message.answer("Нет поступлений", reply_markup=get_initial_keyboard())
         return
-
+    parsing_mode = "HTML"
+    bold = TEXT_PARSERS[parsing_mode]["bold"]
     answer_string = ""
+    result_sum = 0
     for date in sorted(changes):
         answer_string += f"\n\n<b>{date}</b>"
         for user_id in changes[date]:
@@ -352,6 +352,10 @@ async def storage_history_show(message: types.Message, state: FSMContext):
             #answer_string += "<i>Курсив</i> <b>жирный</b> <i><b>жирный курсив</b></i>"
             #answer_string += "*a* **b** ***c***\n"
             answer_string += f"\n<u><i>{user.name}</i></u>:" + product_storage.volumes_string(changes[date][user_id]) + "\n"
+            cost_sum = product_storage.volumes_cost_sum(changes[date][user_id])
+            answer_string += bold(f"{cost_sum} лари\n")
+            result_sum += cost_sum
+    answer_string += bold(f"\nВсего {result_sum} лари")
     await message.answer(answer_string, parse_mode='HTML')
 
 
@@ -402,7 +406,7 @@ async def get_expenses(message: types.Message):
     exp = expenses.get_month_expenses()
     if not exp:
         await message.answer("Нет трат")
-    await message.answer(expenses.expenses_string(exp))
+    await message.answer(expenses.expenses_string(exp), parse_mode="HTML")
 
 
 # @dp.message_handler(IsAdmin(), commands=['ro'])

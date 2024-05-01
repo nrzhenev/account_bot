@@ -6,3 +6,9 @@ def pd(d: dict):
 def pl(l: list):
     for i in l:
         print(i)
+
+
+TEXT_PARSERS = {"HTML": {"underline": lambda x: f"<u>{x}</u>",
+                         "bold": lambda x: f"<b>{x}</b>",
+                         "italic": lambda x: f"<i>{x}</i>"}
+                }
