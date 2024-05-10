@@ -17,7 +17,8 @@ import users
 from auxiliary.system_functions import TEXT_PARSERS
 # import poster_storage as ps
 from handlers.roles import IsAdmin
-from pkg import dp, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING, get_now_date
+from pkg import (dp, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING, get_now_date,
+                 get_most_similar_strings)
 
 SENDERS = ["Счет", "Никита"]
 
@@ -127,7 +128,7 @@ async def transfer_money_waiting_quantity(message: types.Message, state: FSMCont
 
 
 def get_initial_keyboard():
-    return get_keyboard(["balance", "expenses", "Пополнение счета", "storage_history", "storage", "Перевести деньги",
+    return get_keyboard(["balance", "expenses", "set price", "Пополнение счета", "storage_history", "storage", "Перевести деньги",
                          "История действий"])
 
 
@@ -459,6 +460,61 @@ async def restructure_other3(message: types.Message, state: FSMContext):
     categories_module.set_new_name_to_alias(alias, name)
     await message.answer(f"Успешно назначили имя {name} алиасу {alias}")
     await state.finish()
+
+
+class SetPriceStates(StatesGroup):
+    WAITING_PRODUCT_NAME = State()
+    WAITING_PRODUCT_NAME_2 = State()
+    WAITING_NEW_PRICE = State()
+
+
+SET_PRICE_VARIABLES = ["SET_PRICE_PRODUCT"]
+
+
+@dp.message_handler(IsAdmin(), lambda message: message.text == "set price", state=AdminStates.INITIAL_STATE)
+async def set_price(message: types.Message, state: FSMContext):
+    await SetPriceStates.WAITING_PRODUCT_NAME.set()
+    keyboard = get_keyboard(["first"])
+    await message.answer(f"Введите часть имени продукта", reply_markup=keyboard)
+
+
+@dp.message_handler(IsAdmin(), state=SetPriceStates.WAITING_PRODUCT_NAME)
+async def set_price_chose_product(message: types.Message, state: FSMContext):
+    product_name = message.text
+    products = product_storage.get_products()
+    product_names = [p.name for p in products]
+    similar_product_names = get_most_similar_strings(product_name, product_names)[:10]
+    keyboard = get_keyboard(similar_product_names)
+    await SetPriceStates.WAITING_PRODUCT_NAME_2.set()
+    await message.answer(f"Выберите продукт", reply_markup=keyboard)
+
+
+@dp.message_handler(IsAdmin(), state=SetPriceStates.WAITING_PRODUCT_NAME_2)
+async def set_price_chose_product_final(message: types.Message, state: FSMContext):
+    product_name = message.text
+    product = product_storage.get_product_by_name(product_name)
+    if not product:
+        return await message.answer(f"Нет такого продукта")
+    await state.update_data({SET_PRICE_VARIABLES[0]: product})
+    await SetPriceStates.WAITING_NEW_PRICE.set()
+    await message.answer(f"Цена {product.price}\nВведите новую цену")
+
+
+@dp.message_handler(IsAdmin(), state=SetPriceStates.WAITING_NEW_PRICE)
+async def set_price_waiting_value(message: types.Message, state: FSMContext):
+    value = message.text
+    quantity = re.match(r'^[+-]?\d+(\.\d+)?$', value)
+    if not quantity:
+        await message.answer("Введите число в формате 331.12 или 232")
+        return
+
+    data = await state.get_data()
+    product = data.get(SET_PRICE_VARIABLES[0])
+    if not product:
+        return
+    product_storage.set_price(product.name, float(quantity.group()))
+    await message.answer(f"Установили цену {quantity.group()} на {product.name}")
+
 
 
 # @dp.message_handler(IsAdmin(), commands=['gm__'])

@@ -123,11 +123,12 @@ class Product(NamedTuple):
     measurement_unit: str
 
 
-class ProductWithPrice(NamedTuple):
-    id: int
-    name: str
-    measurement_unit: str
-    price: float
+class ProductWithPrice:
+    def __init__(self, id: int, name: str, measurement_unit: str, price: float=0):
+        self.id = id
+        self.name = name
+        self.measurement_unit = measurement_unit
+        self.price = price
 
 
 class ProductVolume(NamedTuple):
@@ -276,23 +277,23 @@ def get_product_in_storage_by_name(product_name: str) -> Optional[ProductVolume]
     return ProductVolume(result[0], result[3])
 
 
-def get_product_by_name(product_name: str) -> Optional[Product]:
+def get_product_by_name(product_name: str) -> Optional[ProductWithPrice]:
     cursor = db.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.name = (?)",
+    cursor.execute("select p.id, p.name, p.measurement_unit, p.price from products p where p.name = (?)",
                    (product_name,))
     result = cursor.fetchone()
     if not result:
         return
-    return Product(*result)
+    return ProductWithPrice(*result)
 
 
-def get_products() -> List[Product]:
+def get_products() -> List[ProductWithPrice]:
     cursor = db.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit from products p")
+    cursor.execute("select p.id, p.name, p.measurement_unit, p.price from products p")
     rows = cursor.fetchall()
     if not rows:
         return []
-    return [Product(*row) for row in rows]
+    return [ProductWithPrice(*row) for row in rows]
 
 
 def get_product_by_id(product_id: int) -> Optional[ProductWithPrice]:
@@ -326,16 +327,16 @@ def increment(product_name: str, increment: float, action_id: int):
     #add_product(product.name, product.measurement_unit, quantity)
 
 
-def get_product_changes_by_action_id(action_id: int) -> List[ProductVolume2]:
+def get_product_changes_by_action_id(action_id: int) -> List[ProductVolumeWithPrice]:
     cursor = db.cursor
     cursor.execute(
-        "select p.id, p.name, p.measurement_unit, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id where pc.action_id = (?) group by p.id",
+        "select p.id, p.name, p.measurement_unit, p.price, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id where pc.action_id = (?) group by p.id",
         (action_id,))
     res = cursor.fetchall()
     result = []
     for row in res:
-        pid, pname, measurement_unit, quantity = row
-        result.append(ProductVolume2(Product(pid, pname, measurement_unit), quantity))
+        pid, pname, measurement_unit, price, quantity = row
+        result.append(ProductVolumeWithPrice(ProductWithPrice(pid, pname, measurement_unit, price), quantity))
     return result
 
 
@@ -357,6 +358,10 @@ def volumes_cost_sum(volumes: List[ProductVolumeWithPrice]) -> float:
     for vol in volumes:
         sum_price += vol.quantity * vol.product.price
     return sum_price
+
+
+def set_price(product_name: str, new_price: float):
+    db.update("products", {"name": product_name, "price": new_price})
 
 
 def volumes_string(volumes: List[ProductVolumeWithPrice]) -> str:
