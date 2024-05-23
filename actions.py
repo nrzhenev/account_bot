@@ -20,7 +20,14 @@ class Message(NamedTuple):
     category_text: str
 
 
-class Action:
+class ActionInterface(ABC):
+    @property
+    @abstractmethod
+    def action_info(self) -> str:
+        pass
+
+
+class Action(ActionInterface):
     """Структура добавленного в БД нового расхода"""
     def __init__(self,
                  action_id: int,
@@ -30,41 +37,72 @@ class Action:
                  created: datetime.date):
         self.action_id = action_id
         self.user_id = user_id
-        self.action_type = action_type
         self.comment = comment
         self.created = created
+        self.action_type = action_type
 
-    def _get_additional_info_by_type(self) -> str:
-        if self.action_type == ActionType.EXPENSE.name:
-            exps = expenses.get_expenses_by_action_id(self.action_id)
-            return expenses.expenses_string(exps)
-        elif self.action_type == ActionType.RECEIVING.name:
-            product_changes = product_storage.get_product_changes_by_action_id(self.action_id)
-            return product_storage.volumes_string(product_changes)
-        elif self.action_type == ActionType.WRITE_OFF.name:
-            return ""
-        elif self.action_type == ActionType.STAFF_WRITE_OFF.name:
-            return ""
+    @property
+    def action_info(self) -> str:
+        raise NotImplementedError
+
+    # def _get_additional_info_by_type(self) -> str:
+    #     if self.action_type == ActionType.EXPENSE.name:
+    #         exps = expenses.get_expenses_by_action_id(self.action_id)
+    #         return expenses.expenses_string(exps)
+    #     elif self.action_type == ActionType.RECEIVING.name:
+    #         product_changes = product_storage.get_product_changes_by_action_id(self.action_id)
+    #         return product_storage.volumes_string(product_changes)
+    #     elif self.action_type == ActionType.WRITE_OFF.name:
+    #         return ""
+    #     elif self.action_type == ActionType.STAFF_WRITE_OFF.name:
+    #         return ""
 
     def __repr__(self):
         return str(self)
 
     def __str__(self):
-        return self._get_additional_info_by_type()
+        return self.action_info
 
 
-class ActionFactory:
-    def __init__(self,
-                 action_id: int,
-                 user_id: int,
-                 action_type: ActionType,
-                 comment: str,
-                 created: datetime.date):
-        pass
+class ExpenseAction(Action):
+    @property
+    def action_info(self) -> str:
+        exps = expenses.get_expenses_by_action_id(self.action_id)
+        return expenses.expenses_string(exps)
 
 
-class Action(ABC):
-    pass
+class WriteOffAction(Action):
+    @property
+    def action_info(self) -> str:
+        return ""
+
+
+class StaffWriteOffAction(Action):
+    @property
+    def action_info(self) -> str:
+        return ""
+
+
+class ReceivingAction(Action):
+    @property
+    def action_info(self) -> str:
+        return ""
+
+
+class MoneyTransferAction(Action):
+    @property
+    def action_info(self) -> str:
+        return self.comment
+
+
+def init_action( action_id: int, user_id: int, action_type: ActionType, comment: str, created: datetime.date):
+    actions = {ActionType.EXPENSE: ExpenseAction,
+               ActionType.RECEIVING: ReceivingAction,
+               ActionType.WRITE_OFF: WriteOffAction,
+               ActionType.STAFF_WRITE_OFF: StaffWriteOffAction,
+               ActionType.MONEY_TRANSFER: MoneyTransferAction}
+    action = actions[action_type](action_id, user_id, action_type, comment, created)
+    return action
 
 
 def add_expense(expense: Action,
@@ -96,8 +134,8 @@ def get_actions_between_dates(date_from: datetime.date, date_to: datetime.date, 
             (date_from.strftime('%Y-%m-%d'), date_to.strftime('%Y-%m-%d'), ActionType.EXPENSE.name))
     all = cursor.fetchall()
     actions = []
-    for one in all:
-        actions.append(Action(one[0], one[1], ActionType[one[2]], one[3], one[4]))
+    for action_row in all:
+        actions.append(init_action(action_row[0], action_row[1], ActionType[action_row[2]], action_row[3], action_row[4]))
     return actions
 
 
@@ -108,18 +146,18 @@ def sort_by_type(actions: List[Action]):
     return result
 
 
-def last() -> List[Action]:
-    """Возвращает последние несколько расходов"""
-    cursor = db.cursor
-    cursor.execute(
-        "select e.amount, c.category "
-        "from expense e left join product_aliases c "
-        "on c.alias=e.product_alias "
-        "order by created desc limit 10")
-    rows = cursor.fetchall()
-    last_expenses = [Action(id=row[0], amount=row[1], product_alias=row[2], user_id=None, created=None) for row in
-                     rows]
-    return last_expenses
+# def last() -> List[Action]:
+#     """Возвращает последние несколько расходов"""
+#     cursor = db.cursor
+#     cursor.execute(
+#         "select e.amount, c.category "
+#         "from expense e left join product_aliases c "
+#         "on c.alias=e.product_alias "
+#         "order by created desc limit 10")
+#     rows = cursor.fetchall()
+#     last_expenses = [init_action(row[0], row[1], ActionType[row[2]], "", None) for row in
+#                      rows]
+#     return last_expenses
 
 
 def get_expenses_by_date(date: str) -> List[Action]:

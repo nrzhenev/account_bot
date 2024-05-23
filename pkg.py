@@ -30,6 +30,7 @@ MONEY_VALUE_REGEX_STRING = "\d+[,.]?\d*"
 
 class ActionType(Enum):
     EXPENSE = "Траты"
+    MONEY_TRANSFER = "Передача/Выдача денег"
     STAFF_WRITE_OFF = "Списание стафф"
     WRITE_OFF = "Списание"
     RECEIVING = "Приемки"

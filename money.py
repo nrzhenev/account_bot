@@ -1,10 +1,12 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
+import users
 from db_modules.db import DataBase
 from typing import List
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-db = DataBase()
+from pkg import new_action_get_id, ActionType, get_now_date
 
+db = DataBase()
 
 
 def add_storage(user: str, initial_amount: float=0):
@@ -34,9 +36,16 @@ def increment(user: str, increment_val: float):
     add_storage(user, balance)
 
 
-def transfer(amount: float, from_name: str, to_name: str):
+def transfer(amount: float, from_name: str, to_name: str, user_id: int=None):
     increment(from_name, -amount)
     increment(to_name, amount)
+    if user_id:
+        user = users.get_user_by_id(user_id)
+        if from_name == "Касса":
+            comment = f"{user.name} выдал {amount} лари для {to_name}"
+        else:
+            comment = f"{user.name} переслал {amount} лари от {from_name} к {to_name}"
+        new_action_get_id(ActionType.MONEY_TRANSFER, user_id, get_now_date(), comment)
 
 
 def balance_report() -> str:

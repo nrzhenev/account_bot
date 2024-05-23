@@ -209,7 +209,7 @@ async def money_out_amount(message: types.Message, state: FSMContext):
         inc = float(re.search("\d+[,.]?\d*", message.text).group())
         #money.increment("Касса", inc * -1)
         sum = initial_money - inc
-        money.transfer(inc, "Касса", recepient)
+        money.transfer(inc, "Касса", recepient, message.from_user.id)
         keyboard = get_initial_keyboard()
         await BarmenStates.INITIAL_STATE.set()
         await message.answer(f"Выдали {inc} из кассы для {recepient}.\nОстаток в кассе {sum}", reply_markup=keyboard)

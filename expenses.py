@@ -7,6 +7,7 @@ import money
 import users
 from db_modules.db import DataBase
 from pkg import get_now_date, get_dates_from_string, ActionType, new_action_get_id
+from auxiliary.system_functions import TEXT_PARSERS
 
 db = DataBase()
 
@@ -133,16 +134,27 @@ def get_month_expenses(date: Optional[datetime.date] = None) -> List[Expense]:
     return expenses
 
 
-def expenses_string(expenses: List[Expense]):
+def expenses_string(expenses: List[Expense], parsing_mode="HTML"):
+    bold = TEXT_PARSERS[parsing_mode]["bold"]
+    italic = TEXT_PARSERS[parsing_mode]["italic"]
+    underlined = TEXT_PARSERS[parsing_mode]["underline"]
     result_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     for expense in expenses:
-        result_dict[expense.user_id][expense.created][expense.category] += expense.amount
+        result_dict[expense.created][expense.user_id][expense.category] += expense.amount
     result = ""
-    for user_id in result_dict:
-        user = users.get_user_by_id(user_id)
-        result += f"\n\n{user.name}:\n"
-        for created in result_dict[user_id]:
-            result += created + ":\n"
-            for category in result_dict[user_id][created]:
-                result += category + f":{result_dict[user_id][created][category]}\n"
+    for created in sorted(result_dict):
+        result += "\n\n" + bold(created) + ":\n"
+        for user_id in result_dict[created]:
+            user = users.get_user_by_id(user_id)
+            result += f"{underlined(italic(user.name))}:\n"
+            for category in result_dict[created][user_id]:
+                result += category + f":{result_dict[created][user_id][category]}\n"
+    return result
+
+
+def filter_expenses(expenses: List[Expense], filter_function) -> List[Expense]:
+    result = []
+    for expense in expenses:
+        if _ := filter_function(expense):
+            result.append(_)
     return result
