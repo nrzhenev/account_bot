@@ -367,7 +367,7 @@ async def storage_history_show(message: types.Message, state: FSMContext):
     result_string += bold(f"\nВсего {result_sum} лари")
     answers.append(result_string)
     for answer in answers:
-        await message.answer(answer)
+        await message.answer(answer, parse_mode=parsing_mode)
 
 
 # @dp.message_handler(commands=['month'])
