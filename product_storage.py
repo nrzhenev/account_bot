@@ -303,7 +303,10 @@ def get_product_by_id(product_id: int) -> Optional[ProductWithPrice]:
     result = cursor.fetchone()
     if not result:
         return
-    return ProductWithPrice(*result)
+    price = result[-1]
+    if not price:
+        price = 0
+    return ProductWithPrice(*result[:-1], price)
 
 
 def get_product_by_id_v0(product_id: int) -> Optional[Product]:
