@@ -344,9 +344,12 @@ async def storage_history_show(message: types.Message, state: FSMContext):
         return
     parsing_mode = "HTML"
     bold = TEXT_PARSERS[parsing_mode]["bold"]
-    answer_string = ""
+    result_string = ""
     result_sum = 0
-    for date in sorted(changes):
+    answers = []
+    sorted_changes = sorted(changes)
+    for date in sorted_changes:
+        answer_string = ""
         answer_string += f"\n\n<b>{date}</b>"
         for user_id in changes[date]:
             user = get_user_by_id(user_id)
@@ -356,8 +359,15 @@ async def storage_history_show(message: types.Message, state: FSMContext):
             cost_sum = product_storage.volumes_cost_sum(changes[date][user_id])
             answer_string += bold(f"{cost_sum} лари\n")
             result_sum += cost_sum
-    answer_string += bold(f"\nВсего {result_sum} лари")
-    await message.answer(answer_string, parse_mode='HTML')
+        if len(result_string + answer_string) > 4000:
+            answers.append(result_string)
+            result_string = answer_string
+        else:
+            result_string += answer_string
+    result_string += bold(f"\nВсего {result_sum} лари")
+    answers.append(result_string)
+    for answer in answers:
+        await message.answer(answer)
 
 
 # @dp.message_handler(commands=['month'])
