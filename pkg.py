@@ -15,14 +15,15 @@ from db_modules.db import DataBase
 from credentials import TOKEN
 from middlewares import AccessMiddleware
 
-IDS = {358058423: "Никита", 1268471021: "Мириан", 5852542325: "Коля", 368555562: "Юля", 651083072: "Миша", 5389969711: "Илья"}
 API_TOKEN = TOKEN
-ACCESS_IDS = IDS
 
 bot = Bot(token=API_TOKEN)
+db = DataBase()
+res = db.fetchall("users", ["user_id", "current_role_id", "name"])
+ACCESS_IDS = {user_id: name for user_id, name in zip(res.get("user_id"), res.get("name"))}
+
 dp = Dispatcher(bot, storage=MemoryStorage())
 dp.middleware.setup(AccessMiddleware(ACCESS_IDS))
-db = DataBase()
 
 
 MONEY_VALUE_REGEX_STRING = "\d+[,.]?\d*"
