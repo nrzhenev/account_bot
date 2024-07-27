@@ -381,7 +381,7 @@ def volumes_string(volumes: List[ProductVolumeWithPrice]) -> str:
     #         result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
     for vol in volumes:
         product = vol.product
-        result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}"
+        result += "\n" + f"{product.name}: {vol.quantity} {product.measurement_unit}; {vol.product.price*vol.quantity} лари"
     return result
 
 
