@@ -524,6 +524,7 @@ async def set_price_waiting_value(message: types.Message, state: FSMContext):
         return
     product_storage.set_price(product.name, float(quantity.group()))
     await message.answer(f"Установили цену {quantity.group()} на {product.name}")
+    await set_price(message, state)
 
 
 
