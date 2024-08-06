@@ -41,11 +41,20 @@ def transfer(amount: float, from_name: str, to_name: str, user_id: int=None):
     increment(to_name, amount)
     if user_id:
         user = users.get_user_by_id(user_id)
+        recieving_user = users.get_user_by_name(to_name)
         if from_name == "Касса":
-            comment = f"{user.name} выдал {amount} лари для {to_name}"
+            transfer_comment = f"{user.name} выдал {amount} лари для {to_name}"
+            recieving_comment = f"{to_name} получил {amount} лари из Кассы от {user.name}"
+            new_action_get_id(ActionType.MONEY_TRANSFER, user_id, get_now_date(), transfer_comment)
+            if recieving_user:
+                new_action_get_id(ActionType.MONEY_RECEIVING, recieving_user.user_id, get_now_date(), recieving_comment)
         else:
-            comment = f"{user.name} переслал {amount} лари от {from_name} к {to_name}"
-        new_action_get_id(ActionType.MONEY_TRANSFER, user_id, get_now_date(), comment)
+            transfer_comment = f"{user.name} переслал {amount} лари от {from_name} к {to_name}"
+            recieving_comment = f"{to_name} получил {amount} лари от {user.name}"
+            new_action_get_id(ActionType.MONEY_TRANSFER, user_id, get_now_date(), transfer_comment)
+            if recieving_user:
+                new_action_get_id(ActionType.MONEY_RECEIVING, recieving_user.user_id, get_now_date(), recieving_comment)
+
 
 
 def balance_report() -> str:

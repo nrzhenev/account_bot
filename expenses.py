@@ -38,17 +38,27 @@ class Expense:
         return f"{self.amount}: {self.category}. ({self.created} - {user.name})"
 
 
-def add_expense(expense: Expense,
+def add_expenses(expenses: List[Expense],
                 date: datetime.date,
                 comment: Optional[str]=None):
+    expenses_sorted_by_user = defaultdict(list)
+    for expense in expenses:
+        expenses_sorted_by_user[expense.user_id].append(expense)
     if not comment:
         comment = ""
-    action_id = new_action_get_id(ActionType.EXPENSE, expense.user_id, date, comment)
-    db.insert("expense", {"amount": expense.amount,
-                                            "category": expense.category,
-                                            "action_id": action_id})
-    user = users.get_user_by_id(expense.user_id)
-    money.increment(user.name, -1*expense.amount)
+
+    for user_id in expenses_sorted_by_user:
+        expenses = expenses_sorted_by_user[user_id]
+        money_increment = 0
+        action_id = new_action_get_id(ActionType.EXPENSE, user_id, date, comment)
+        for expense in expenses:
+            db.insert("expense", {"amount": expense.amount,
+                                                    "category": expense.category,
+                                                    "action_id": action_id})
+            money_increment -= expense.amount
+
+        user = users.get_user_by_id(user_id)
+        money.increment(user.name, money_increment)
 
 
 def expenses_sum(expenses: List[Expense]) -> float:

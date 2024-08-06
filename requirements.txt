@@ -1,5 +1,6 @@
 aiogram==2.4
 aiohttp==3.6.2
+alembic==1.13.2
 async-timeout==3.0.1
 attrs==19.3.0
 Babel==2.7.0
@@ -14,4 +15,5 @@ dateparser
 pytest
 python-Levenshtein
 requests
-alembic
+sqlalchemy
+pytest==7.1.2

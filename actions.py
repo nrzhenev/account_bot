@@ -1,15 +1,13 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
 import datetime
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import List, NamedTuple, Optional
-from abc import ABC, abstractmethod
 
-import money
-import expenses
-import product_storage
+import expenses as expenses_module
 import users
 from db_modules.db import DataBase
-from pkg import get_now_date, get_dates_from_string, ActionType, new_action_get_id
+from pkg import ActionType
 
 db = DataBase()
 
@@ -21,9 +19,8 @@ class Message(NamedTuple):
 
 
 class ActionInterface(ABC):
-    @property
     @abstractmethod
-    def action_info(self) -> str:
+    def action_info(self, *args) -> str:
         pass
 
 
@@ -41,9 +38,25 @@ class Action(ActionInterface):
         self.created = created
         self.action_type = action_type
 
-    @property
-    def action_info(self) -> str:
+
+class MoneyAction(ActionInterface):
+    """Структура добавленного в БД нового расхода"""
+
+    def __init__(self,
+                 action_id: int,
+                 user_id: int,
+                 action_type: ActionType,
+                 comment: str,
+                 created: datetime.date):
+        self.action_id = action_id
+        self.user_id = user_id
+        self.comment = comment
+        self.created = created
+        self.action_type = action_type
+
+    def action_info(self, user_info: bool, date_info: bool) -> str:
         raise NotImplementedError
+
 
     # def _get_additional_info_by_type(self) -> str:
     #     if self.action_type == ActionType.EXPENSE.name:
@@ -61,77 +74,103 @@ class Action(ActionInterface):
         return str(self)
 
     def __str__(self):
-        return self.action_info
+        return self.action_info()
 
 
 class ExpenseAction(Action):
-    @property
-    def action_info(self) -> str:
-        exps = expenses.get_expenses_by_action_id(self.action_id)
-        return expenses.expenses_string(exps)
+    def action_info(self, user_info: bool=True, date_info: bool=True) -> str:
+        exps = expenses_module.get_expenses_by_action_id(self.action_id)
+        expenses_by_user = defaultdict(list)
+        for exp in exps:
+            expenses_by_user[exp.user_id].append(exp)
+        result = ""
+        for user_id in expenses_by_user:
+            user = users.get_user_by_id(user_id)
+            expenses = expenses_by_user[user_id]
+            user_string = ""
+            date_string = ""
+            if user_info:
+                user_string = user.name + " "
+            if date_info:
+                date_string = f" {str(self.created)} числа"
+
+            result += f"{user_string}потратил {expenses_module.expenses_sum(expenses)} лари{date_string}\n"
+        return result
 
 
 class WriteOffAction(Action):
-    @property
-    def action_info(self) -> str:
-        return ""
+    def action_info(self, user_info: bool, date_info: bool) -> str:
+        return " "
 
 
 class StaffWriteOffAction(Action):
-    @property
-    def action_info(self) -> str:
-        return ""
+    def action_info(self, user_info: bool, date_info: bool) -> str:
+        return " "
 
 
 class ReceivingAction(Action):
-    @property
-    def action_info(self) -> str:
-        return ""
-
-
-class MoneyTransferAction(Action):
-    @property
-    def action_info(self) -> str:
+    def action_info(self, user_info: bool, date_info: bool) -> str:
         return self.comment
 
 
-def init_action( action_id: int, user_id: int, action_type: ActionType, comment: str, created: datetime.date):
+class MoneyTransferAction(Action):
+    def action_info(self, user_info: bool, date_info: bool) -> str:
+        return self.comment
+
+
+class MoneyReceivingAction(Action):
+    def action_info(self, user_info: bool, date_info: bool) -> str:
+        return self.comment
+
+
+def init_action(action_id: int, user_id: int, action_type: ActionType, comment: str, created: datetime.date):
     actions = {ActionType.EXPENSE: ExpenseAction,
                ActionType.RECEIVING: ReceivingAction,
                ActionType.WRITE_OFF: WriteOffAction,
                ActionType.STAFF_WRITE_OFF: StaffWriteOffAction,
-               ActionType.MONEY_TRANSFER: MoneyTransferAction}
+               ActionType.MONEY_TRANSFER: MoneyTransferAction,
+               ActionType.MONEY_RECEIVING: MoneyReceivingAction
+               }
     action = actions[action_type](action_id, user_id, action_type, comment, created)
     return action
 
 
-def add_expense(expense: Action,
-                date: datetime.date=get_now_date(),
-                comment: Optional[str]=None):
-    if not comment:
-        comment = ""
-    action_id = new_action_get_id(ActionType.EXPENSE, expense.user_id, date, comment)
-    db.insert("expense", {"amount": expense.amount,
-                                            "category": expense.category,
-                                            "action_id": action_id})
-    user = users.get_user_by_id(expense.user_id)
-    money.increment(user.name, -1*expense.amount)
-
-
-def expenses_sum(expenses: List[Action]) -> float:
-    return sum([exp.amount for exp in expenses])
-
-
-def get_actions_between_dates(date_from: datetime.date, date_to: datetime.date, action_type: Optional[ActionType]=None) -> List[Action]:
+def get_actions_between_dates(date_from: Optional[datetime.date]=None,
+                              date_to: Optional[datetime.date]=None,
+                              action_type: Optional[ActionType]=None) -> List[Action]:
     cursor = db.cursor
     if not action_type:
-        cursor.execute(
-            "Select action_id, user_id, action_type, comment, created From actions WHERE date(?) <= date(created) AND date(created) <= date(?)",
-            (date_from.strftime('%Y-%m-%d'), date_to.strftime('%Y-%m-%d')))
+        if date_from and date_to:
+            cursor.execute(
+                "Select action_id, user_id, action_type, comment, created From actions WHERE date(?) <= date(created) AND date(created) <= date(?)",
+                (date_from.strftime('%Y-%m-%d'), date_to.strftime('%Y-%m-%d')))
+        elif date_from:
+            cursor.execute(
+                "Select action_id, user_id, action_type, comment, created From actions WHERE date(?) <= date(created)",
+                (date_from.strftime('%Y-%m-%d')))
+        elif date_to:
+            cursor.execute(
+                "Select action_id, user_id, action_type, comment, created From actions WHERE date(created) <= date(?)",
+                (date_to.strftime('%Y-%m-%d')))
+        else:
+            cursor.execute("Select action_id, user_id, action_type, comment, created From actions")
     else:
-        cursor.execute(
-            "Select action_id, user_id, action_type, comment, created From actions WHERE date(?) <= date(created) AND date(created) <= date(?) AND action_type = ?",
-            (date_from.strftime('%Y-%m-%d'), date_to.strftime('%Y-%m-%d'), ActionType.EXPENSE.name))
+        if date_from and date_to:
+            cursor.execute(
+                "Select action_id, user_id, action_type, comment, created From actions WHERE date(?) <= date(created) AND date(created) <= date(?) AND action_type = ?",
+                (date_from.strftime('%Y-%m-%d'), date_to.strftime('%Y-%m-%d'), ActionType.EXPENSE.name))
+        elif date_from:
+            cursor.execute(
+                "Select action_id, user_id, action_type, comment, created From actions WHERE date(?) <= date(created) AND action_type = ?",
+                (date_from.strftime('%Y-%m-%d'), ActionType.EXPENSE.name))
+        elif date_to:
+            cursor.execute(
+                "Select action_id, user_id, action_type, comment, created From actions WHERE date(created) <= date(?) AND action_type = ?",
+                (date_to.strftime('%Y-%m-%d'), ActionType.EXPENSE.name))
+        else:
+            cursor.execute(
+                "Select action_id, user_id, action_type, comment, created From actions WHERE action_type = ?",
+                (ActionType.EXPENSE.name))
     all = cursor.fetchall()
     actions = []
     for action_row in all:
@@ -139,73 +178,32 @@ def get_actions_between_dates(date_from: datetime.date, date_to: datetime.date, 
     return actions
 
 
-def sort_by_type(actions: List[Action]):
-    result = defaultdict(list)
-    for action in actions:
-        result[action.action_type].append(action)
-    return result
-
-
-# def last() -> List[Action]:
-#     """Возвращает последние несколько расходов"""
-#     cursor = db.cursor
-#     cursor.execute(
-#         "select e.amount, c.category "
-#         "from expense e left join product_aliases c "
-#         "on c.alias=e.product_alias "
-#         "order by created desc limit 10")
-#     rows = cursor.fetchall()
-#     last_expenses = [init_action(row[0], row[1], ActionType[row[2]], "", None) for row in
-#                      rows]
-#     return last_expenses
-
-
-def get_expenses_by_date(date: str) -> List[Action]:
-    date = get_dates_from_string(date)[0]
-    cursor = db.cursor
-    cursor.execute("Select amount, category, user_id, created From expense WHERE date(created) = date(?)",
-                   (date.strftime('%Y-%m-%d'),))
-    all = cursor.fetchall()
-    expenses = []
-    for one in all:
-        expenses.append(Action(*one))
-    return expenses
-
-
-def expenses_by_user(expenses: List[Action], user_id: int) -> List[Action]:
-    return [exp for exp in expenses if exp.user_id == user_id]
-
-
-def get_today_actions(date: Optional[datetime.date]=None) -> List[Action]:
-    if not date:
-        now = get_now_date()
-    else:
-        now = date
-    beginning_of_day = datetime.datetime(now.year, now.month, now.day, 0)
-    actions = get_actions_between_dates(beginning_of_day, now)
-    return actions
-
-
-def get_month_expenses(date: Optional[datetime.date] = None) -> List[Action]:
-    if not date:
-        now = get_now_date()
-    else:
-        now = date
-    first_day_of_month = get_dates_from_string(f'1-{now.month}-{now.year}')[0]
-    first_day = first_day_of_month
-    expenses = get_actions_between_dates(first_day, now)
-    return expenses
+# def get_today_actions(date: Optional[datetime.date]=None) -> List[Action]:
+#     if not date:
+#         now = get_now_date()
+#     else:
+#         now = date
+#     beginning_of_day = datetime.datetime(now.year, now.month, now.day, 0)
+#     actions = get_actions_between_dates(beginning_of_day, now)
+#     return actions
 
 
 def actions_string(actions: List[Action]) -> str:
-    result_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    # actions_by_id = defaultdict(list)
+    # for action in actions:
+    #     actions_by_id[action.action_id].append(action)
+    result_dict = defaultdict(lambda: defaultdict(list))
     for action in actions:
-        result_dict[action.user_id][action.action_type][action.created].append(action)
+        #result_dict[action.user_id].append(action_id)
+        result_dict[action.user_id][action.created].append(action)
     result = ""
     for user_id in result_dict:
-        result += f"{user_id}:\n"
-        for action_type in result_dict[user_id]:
-            result += action_type.value + ":\n"
-            for created in result_dict[user_id][action_type]:
-                result += created + f":{result_dict[user_id][action_type][created]}\n"
+        user = users.get_user_by_id(user_id)
+        result += f"{user.name}:\n"
+        #for action_type in result_dict[user_id]:
+        for creation_date in result_dict[user_id]:
+            result += str(creation_date)+ ":\n"
+            #for created in result_dict[user_id][creation_date]:
+            for action in result_dict[user_id][creation_date]:
+                result += f"{action.action_info(False, False)}\n"
     return result

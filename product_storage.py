@@ -124,11 +124,12 @@ class Product(NamedTuple):
 
 
 class ProductWithPrice:
-    def __init__(self, id: int, name: str, measurement_unit: str, price: float=0):
+    def __init__(self, id: int, name: str, measurement_unit: str, min_price: float=0, max_price: float=0):
         self.id = id
         self.name = name
         self.measurement_unit = measurement_unit
-        self.price = price
+        self.min_price = min_price
+        self.max_price = max_price
 
 
 class ProductVolume(NamedTuple):
