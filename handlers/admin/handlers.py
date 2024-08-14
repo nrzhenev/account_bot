@@ -1,5 +1,5 @@
 import datetime
-
+import logging
 # import product_storage
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -12,13 +12,14 @@ import expenses
 import money
 import product_storage
 from handlers.admin import AdminStates, get_initial_keyboard
-from handlers.admin.money_transfer import transfer_money
-from handlers.admin.get_balance_history import products_categories
 from handlers.admin.set_date_interval import choose_action
+
+LOGGER = logging.getLogger(__name__)
+
 
 # import poster_storage as ps
 from handlers.roles import IsAdmin
-from pkg import (dp, get_keyboard, get_now_date)
+from pkg import (dp, get_keyboard, get_now_date, log_function_name)
 
 
 class GetStatisticsStates(StatesGroup):
@@ -34,6 +35,7 @@ class ActionsStates(StatesGroup):
     WAITING_ACTION = State()
 
 
+@log_function_name
 @dp.message_handler(IsAdmin(), commands=['start', 'help'])
 async def start(message: types.Message, state: FSMContext):
     await state.reset_state()
@@ -44,7 +46,10 @@ async def start(message: types.Message, state: FSMContext):
 @dp.message_handler(lambda message: message.text == "История действий", state=AdminStates.INITIAL_STATE)
 async def get_actions(message: types.Message, state: FSMContext):
     #await ActionsStates.WAITING_ACTION.set()
-    acts = actions.get_actions_between_dates(get_now_date() - datetime.timedelta(days=200), get_now_date())
+    data = await state.get_data()
+    from_date = data.get('from_date', get_now_date() - datetime.timedelta(days=200))
+    to_date = data.get('to_date', get_now_date())
+    acts = actions.get_actions_between_dates(from_date, to_date)
     result = "Действия:\n"
     # for act in acts:
     #     result += str(act)
@@ -132,11 +137,3 @@ SET_PRICE_VARIABLES = ["SET_PRICE_PRODUCT"]
 # async def get_messages(message: types.Message):
 #     await message.answer(messages.get_messages())
 #
-
-
-@dp.message_handler(IsAdmin(), state=None)
-async def get_initial_message(message: types.Message):
-    keyboard = get_initial_keyboard()
-    await AdminStates.INITIAL_STATE.set()
-    await message.answer("Выберите действие", reply_markup=keyboard)
-

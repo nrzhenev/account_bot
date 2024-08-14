@@ -5,8 +5,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 import product_storage
 import users
 from auxiliary.system_functions import TEXT_PARSERS
-from handlers.admin.handlers import get_initial_message
-from handlers.admin import AdminStates, get_initial_keyboard
+from handlers.admin import AdminStates, get_initial_keyboard, get_initial_message
 from handlers.roles import IsAdmin
 from pkg import dp, get_keyboard
 from users import get_user_by_id

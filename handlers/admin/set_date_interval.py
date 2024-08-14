@@ -1,5 +1,3 @@
-import re
-
 from datetime import date
 from typing import Optional
 
@@ -7,9 +5,8 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-import money
-from handlers.admin import AdminStates, get_initial_keyboard
-from pkg import dp, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING, get_dates_from_string
+from handlers.admin import AdminStates, get_initial_message
+from pkg import dp, get_keyboard, get_dates_from_string, log_function_name
 
 
 class SetDateIntervalStates(StatesGroup):
@@ -23,9 +20,11 @@ BUTTONS = ["Установить нижний порог даты", "Устан�
 
 
 @dp.message_handler(lambda message: message.text==FIRST_BUTTON, state=AdminStates.INITIAL_STATE)
+@log_function_name
 async def choose_action(message: types.Message, state: FSMContext):
+    print("Function choose_action is called")
     keyboard = get_keyboard(BUTTONS, True)
-    text = "Выберите, действие"
+    text = "Выберите действие"
     await SetDateIntervalStates.CHOOSE_ACTION.set()
     await message.answer(text, reply_markup=keyboard)
 
@@ -89,4 +88,4 @@ async def reset_dates(message: types.Message, state: FSMContext):
 
 @dp.message_handler(lambda message: message.text == BUTTONS[3], state=SetDateIntervalStates.CHOOSE_ACTION)
 async def back(message: types.Message, state: FSMContext):
-    await AdminStates.INITIAL_STATE.set()
+    await get_initial_message(message)

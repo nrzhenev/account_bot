@@ -1,6 +1,7 @@
 import datetime
 from typing import List, Optional
 from enum import Enum, auto
+import logging
 
 import aiogram
 import pytz
@@ -10,6 +11,7 @@ from aiogram.types import KeyboardButton
 from dateparser.search import search_dates
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import re
+from functools import wraps
 
 from db_modules.db import DataBase
 from credentials import TOKEN
@@ -24,6 +26,18 @@ ACCESS_IDS = {user_id: name for user_id, name in zip(res.get("user_id"), res.get
 
 dp = Dispatcher(bot, storage=MemoryStorage())
 dp.middleware.setup(AccessMiddleware(ACCESS_IDS))
+
+
+def log_function_name(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logging.info(f"Calling function: {func.__name__}")
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def message_handler(args):
+    return dp.message_handler(*args)
 
 
 MONEY_VALUE_REGEX_STRING = "\d+[,.]?\d*"
