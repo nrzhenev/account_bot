@@ -4,7 +4,6 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 import product_storage
-from handlers.admin.handlers import SET_PRICE_VARIABLES
 from handlers.admin import AdminStates
 from handlers.admin.storage_history import SetPriceStates
 from handlers.roles import IsAdmin
@@ -37,23 +36,27 @@ async def set_price_chose_product_final(message: types.Message, state: FSMContex
     product = product_storage.get_product_by_name(product_name)
     if not product:
         return await message.answer(f"Нет такого продукта")
-    await state.update_data({SET_PRICE_VARIABLES[0]: product})
+    await state.update_data({"SET_PRICE_PRODUCT": product})
     await SetPriceStates.WAITING_NEW_PRICE.set()
-    await message.answer(f"Цена {product.price}\nВведите новую цену")
+    await message.answer(f"Встречающиеся цены продукта {product.prices}\nДобавьте новые встречающиеся цены через запятую")
 
 
 @dp.message_handler(IsAdmin(), state=SetPriceStates.WAITING_NEW_PRICE)
 async def set_price_waiting_value(message: types.Message, state: FSMContext):
     value = message.text
-    quantity = re.match(r'^[+-]?\d+(\.\d+)?$', value)
-    if not quantity:
-        await message.answer("Введите число в формате 331.12 или 232")
+    prices = value.split(",")
+    if not prices:
+        await message.answer("Введите цены через запятую")
         return
 
     data = await state.get_data()
-    product = data.get(SET_PRICE_VARIABLES[0])
+    product = data.get("SET_PRICE_PRODUCT")
     if not product:
         return
-    product_storage.set_price(product.name, float(quantity.group()))
-    await message.answer(f"Установили цену {quantity.group()} на {product.name}")
+    for price in prices:
+        product_storage.set_price(product.name, float(price))
+    await message.answer(f"Установили цены {prices} на {product.name}")
     await set_price(message, state)
+
+
+SET_PRICE_VARIABLES = ["SET_PRICE_PRODUCT"]

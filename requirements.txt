@@ -12,8 +12,9 @@ pytz==2019.3
 yarl==1.4.2
 regex
 dateparser
-pytest
+#pytest
 python-Levenshtein
 requests
 sqlalchemy
 pytest==7.1.2
+numpy==1.24.4

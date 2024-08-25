@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import NamedTuple, Optional, List, Tuple
 
 import regex as re
+import numpy as np
 
 from db_modules.db import DataBase
 from pkg import new_action_get_id, ActionType
@@ -124,12 +125,15 @@ class Product(NamedTuple):
 
 
 class ProductWithPrice:
-    def __init__(self, id: int, name: str, measurement_unit: str, min_price: float=0, max_price: float=0):
+    def __init__(self, id: int, name: str, measurement_unit: str, prices: List[float]):
         self.id = id
         self.name = name
         self.measurement_unit = measurement_unit
-        self.min_price = min_price
-        self.max_price = max_price
+        self.prices = np.array(prices)
+
+    @property
+    def price(self):
+        return np.median(self.prices)
 
 
 class ProductVolume(NamedTuple):
@@ -280,34 +284,35 @@ def get_product_in_storage_by_name(product_name: str) -> Optional[ProductVolume]
 
 def get_product_by_name(product_name: str) -> Optional[ProductWithPrice]:
     cursor = db.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit, p.price from products p where p.name = (?)",
+    cursor.execute("select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from products p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
                    (product_name,))
     result = cursor.fetchone()
     if not result:
         return
-    return ProductWithPrice(*result)
+    prices = [float(price) for price in result[3].split(",")]
+    return ProductWithPrice(*result[:-1], prices)
 
 
 def get_products() -> List[ProductWithPrice]:
     cursor = db.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit, p.price from products p")
+    cursor.execute("select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') from products p LEFT JOIN product_price pp ON p.id = pp.product_id GROUP BY p.id")
     rows = cursor.fetchall()
     if not rows:
         return []
-    return [ProductWithPrice(*row) for row in rows]
+
+    return [ProductWithPrice(*row[:3], [float(price) for price in row[3].split(",")]) for row in rows]
 
 
 def get_product_by_id(product_id: int) -> Optional[ProductWithPrice]:
     cursor = db.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit, p.price from products p where p.id = (?) group by p.id",
+    cursor.execute("select p.id, p.name, p.measurement_unit, GROUP_CONCAT(pp.product_price) from products p JOIN product_price pp ON p.id = pp.product_id where p.id = (?) group by p.id",
                    (product_id,))
     result = cursor.fetchone()
     if not result:
         return
-    price = result[-1]
-    if not price:
-        price = 0
-    return ProductWithPrice(*result[:-1], price)
+    prices_string = result[-1]
+    prices = [float(price) for price in prices_string.split(",")]
+    return ProductWithPrice(*result[:-1], prices)
 
 
 def get_product_by_id_v0(product_id: int) -> Optional[Product]:
@@ -340,7 +345,7 @@ def get_product_changes_by_action_id(action_id: int) -> List[ProductVolumeWithPr
     result = []
     for row in res:
         pid, pname, measurement_unit, price, quantity = row
-        result.append(ProductVolumeWithPrice(ProductWithPrice(pid, pname, measurement_unit, price), quantity))
+        result.append(ProductVolumeWithPrice(ProductWithPrice(pid, pname, measurement_unit, prices), quantity))
     return result
 
 
@@ -365,7 +370,8 @@ def volumes_cost_sum(volumes: List[ProductVolumeWithPrice]) -> float:
 
 
 def set_price(product_name: str, new_price: float):
-    db.update("products", {"name": product_name, "price": new_price})
+    product = get_product_by_name(product_name)
+    db.insert("product_price", {"product_id": product.id, "price": new_price})
 
 
 def volumes_string(volumes: List[ProductVolumeWithPrice]) -> str:
