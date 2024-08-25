@@ -12,7 +12,18 @@ import expenses
 import money
 import product_storage
 from handlers.admin import AdminStates, get_initial_keyboard
-from handlers.admin.set_date_interval import choose_action
+
+
+def init_handlers():
+    from handlers.admin.get_balance_history import get_actions_between_dates
+    from handlers.admin.money_receive import verify_message_is_value
+    from handlers.admin.money_transfer import transfer_money
+    from handlers.admin.set_date_interval import choose_action
+    from handlers.admin.set_price import set_price
+    from handlers.admin.storage_history import storage_history_show
+
+
+init_handlers()
 
 LOGGER = logging.getLogger(__name__)
 
@@ -128,10 +139,6 @@ async def restructure_other3(message: types.Message, state: FSMContext):
     categories_module.set_new_name_to_alias(alias, name)
     await message.answer(f"Успешно назначили имя {name} алиасу {alias}")
     await state.finish()
-
-
-SET_PRICE_VARIABLES = ["SET_PRICE_PRODUCT"]
-
 
 # @dp.message_handler(IsAdmin(), commands=['gm__'])
 # async def get_messages(message: types.Message):

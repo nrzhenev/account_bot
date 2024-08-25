@@ -1,3 +1,4 @@
+import datetime
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -7,7 +8,7 @@ import users
 from auxiliary.system_functions import TEXT_PARSERS
 from handlers.admin import AdminStates, get_initial_keyboard, get_initial_message
 from handlers.roles import IsAdmin
-from pkg import dp, get_keyboard
+from pkg import dp, get_keyboard, get_now_date, log_function_name
 from users import get_user_by_id
 
 
@@ -108,7 +109,7 @@ async def storage_history_add_restriction_product(message: types.Message, state=
 
     if name not in names:
         return await storage_history_add_restriction_worker(message)
-    await state.update_data({STORAGE_HISTORY_DATA[3]: name})
+    await state.update_data({STORAGE_HISTORY_DATA[1]: name})
     await message.answer(f"Добавлено ограничение по имени: {name}")
     await storage_history(message)
 
@@ -124,10 +125,12 @@ async def storage_history_show(message: types.Message, state: FSMContext):
 
     data = await state.get_data()
     worker_name = data.get(STORAGE_HISTORY_DATA[0])
-    from_date = data.get(STORAGE_HISTORY_DATA[1])
-    to_date = data.get(STORAGE_HISTORY_DATA[2])
-    product: product_storage.Product = data.get(STORAGE_HISTORY_DATA[3])
-    product_category = data.get(STORAGE_HISTORY_DATA[4])
+    #from_date = data.get(STORAGE_HISTORY_DATA[1])
+    from_date = data.get('from_date', get_now_date() - datetime.timedelta(days=200))
+    #to_date = data.get(STORAGE_HISTORY_DATA[2])
+    to_date = data.get('to_date', get_now_date())
+    product: product_storage.Product = data.get(STORAGE_HISTORY_DATA[1])
+    product_category = data.get(STORAGE_HISTORY_DATA[2])
 
     if worker_name:
         worker = users.get_user_by_name(worker_name)
@@ -179,7 +182,7 @@ async def storage_history_show(message: types.Message, state: FSMContext):
 STORAGE_HISTORY_ACTIONS = ["Показать", "Добавить условие поиска", "Убрать условие поиска"]
 STORAGE_HISTORY_RESTRICTIONS = ["По работнику", "По датам", "По продукту"]
 STORAGE_HISTORY_AUXILIARY_ACTIONS = ["Вернуться назад"]
-STORAGE_HISTORY_DATA = ["restriction_worker_name", "from_date", "to_date", "product", "products_category"]
+STORAGE_HISTORY_DATA = ["restriction_worker_name", "product", "products_category"]
 
 
 class SetPriceStates(StatesGroup):
