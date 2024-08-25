@@ -38,9 +38,15 @@ create table if not exists category_links(
 create table if not exists products(
     id integer primary key,
     name varchar(80),
-    measurement_unit varchar(3),
+    measurement_unit varchar(3)
+);
+
+
+create table if not exists product_price(
+    product_id integer,
     price float
 );
+
 
 
 create table if not exists messages(
