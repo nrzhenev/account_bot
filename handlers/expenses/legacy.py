@@ -26,16 +26,9 @@ OTHER_PURPOSES_FOR_MONEY_OUT = ["Зарплата", "Самостоятельн�
 
 
 
-class ExpensesStates(StatesGroup):
+class ExpensesInitialStates(StatesGroup):
     INITIAL_STATE = State()
-    WAITING_SUPPLY_NAME = State()
-    WAITING_CATEGORY_NAME = State()
-    WAITING_FOR_SUPPLY_SUM = State()
-    WAITING_FOR_SUPPLY_ENTER_WITH_HINTS = State()
-    WAITING_FOR_FIRST_RESPONSE = State()
-    WAITING_FOR_SECOND_RESPONSE = State()
-    WAITING_FOR_THIRD_RESPONSE = State()
-    WAITING_FOR_COMMENT = State()
+    ADD_EXPENSES = State()
 
 
 async def expenses_string(expenses: List[Expense]) -> str:

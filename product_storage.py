@@ -287,7 +287,8 @@ def get_product_by_name(product_name: str) -> Optional[ProductWithPrice]:
     cursor.execute("select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from products p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
                    (product_name,))
     result = cursor.fetchone()
-    if not result:
+    id, name, measurement_unit, prices = result
+    if not (id and name):
         return
     prices = [float(price) for price in result[3].split(",")]
     return ProductWithPrice(*result[:-1], prices)

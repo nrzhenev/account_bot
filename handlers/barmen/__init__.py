@@ -1,0 +1,1 @@
+from handlers.barmen.receiving_by_hand import get_initial_keyboard

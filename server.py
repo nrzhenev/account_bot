@@ -9,9 +9,9 @@ from aiogram import executor
 from pkg import dp
 from product_storage import CategoriesTree
 from db_modules.db import DataBase
+from handlers.expenses import initial_handlers
 from handlers.priority_handlers import chr
 from handlers.admin.handlers import UserStates
-from handlers.expenses.handlers import save_message
 from handlers.barmen.handlers import get_keyboard
 from handlers.cook.handlers import show_shipment
 
