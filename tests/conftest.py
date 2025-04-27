@@ -3,6 +3,9 @@ import os
 import sqlite3
 from unittest.mock import MagicMock, patch
 
+from db_modules.db import DataBase
+
+
 # Фикстура для создания тестовой базы данных
 @pytest.fixture
 def test_db():
@@ -16,38 +19,23 @@ def test_db():
     # Удаляем существующую тестовую БД, если она есть
     if os.path.exists(test_db_path):
         os.remove(test_db_path)
-    
-    # Создаем соединение с новой БД
-    conn = sqlite3.connect(test_db_path)
-    cursor = conn.cursor()
-    
-    # Инициализируем БД из SQL-скрипта
-    with open("createdb.sql", "r") as f:
-        sql = f.read()
-    cursor.executescript(sql)
-    conn.commit()
-    
-    # Патчим путь к базе данных для тестов
-    with patch('db_modules.db.LOCAL_DB_NAME', test_db_path):
-        yield test_db_path
-    
-    # Закрываем соединение после теста
-    conn.close()
+
+    yield DataBase(test_db_path)
     
     # Опционально можно удалить тестовую БД после тестов
     # if os.path.exists(test_db_path):
     #     os.remove(test_db_path)
 
-# Патчим модуль db, чтобы изолировать тесты от реальной базы данных
-@pytest.fixture(autouse=True)
-def mock_db():
-    """Автоматически патчит базу данных во всех тестах"""
-    with patch('db_modules.db.DataBase') as mock_db:
-        mock_db_instance = MagicMock()
-        mock_cursor = MagicMock()
-        mock_db_instance.cursor = mock_cursor
-        mock_db.return_value = mock_db_instance
-        yield mock_db_instance
+# # Патчим модуль db, чтобы изолировать тесты от реальной базы данных
+# @pytest.fixture(autouse=True)
+# def mock_db():
+#     """Автоматически патчит базу данных во всех тестах"""
+#     with patch('db_modules.db.DataBase') as mock_db:
+#         mock_db_instance = MagicMock()
+#         mock_cursor = MagicMock()
+#         mock_db_instance.cursor = mock_cursor
+#         mock_db.return_value = mock_db_instance
+#         yield mock_db_instance
 
 # Фикстура для создания экземпляра ProductWithPrice
 @pytest.fixture

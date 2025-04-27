@@ -187,9 +187,9 @@ def increments_from_text0(text: str):
     # return result_messages
 
 
-def add_product(product_name: str, measurement_unit: str, quantity: float=0):
+def add_product(product_name: str, measurement_unit: str, data_base=db):
     product_name = product_name.lower()
-    db.insert("products",
+    data_base.insert("products",
               {"name": product_name, "measurement_unit": measurement_unit})
 
 
@@ -282,8 +282,8 @@ def get_product_in_storage_by_name(product_name: str) -> Optional[ProductVolume]
     return ProductVolume(result[0], result[3])
 
 
-def get_product_by_name(product_name: str) -> Optional[ProductWithPrice]:
-    cursor = db.cursor
+def get_product_by_name(product_name: str, data_base=db) -> Optional[ProductWithPrice]:
+    cursor = data_base.cursor
     cursor.execute("select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from products p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
                    (product_name,))
     result = cursor.fetchone()

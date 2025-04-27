@@ -21,6 +21,8 @@ class DataBase:
         self._existed = False
         if os.path.exists(path):
             self._existed = Tuple
+
+        self.path = path
         self.conn = sqlite3.connect(path)
         self.cursor = self.conn.cursor()
         self._init_db()
