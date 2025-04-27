@@ -306,7 +306,7 @@ def get_products() -> List[ProductWithPrice]:
 
 def get_product_by_id(product_id: int) -> Optional[ProductWithPrice]:
     cursor = db.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit, GROUP_CONCAT(pp.product_price) from products p JOIN product_price pp ON p.id = pp.product_id where p.id = (?) group by p.id",
+    cursor.execute("select p.id, p.name, p.measurement_unit, GROUP_CONCAT(pp.price) from products p JOIN product_price pp ON p.id = pp.product_id where p.id = (?) group by p.id",
                    (product_id,))
     result = cursor.fetchone()
     if not result:
