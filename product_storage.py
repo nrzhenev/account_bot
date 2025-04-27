@@ -7,7 +7,7 @@ import regex as re
 import numpy as np
 
 from db_modules.db import DataBase
-from pkg import new_action_get_id, ActionType
+from pkg import new_action_get_id, ActionType, db
 
 db = DataBase()
 
@@ -38,12 +38,12 @@ class CategoriesTree:
     #         cls._INSTANCE = super(ProductCategoriesTree, cls).__new__(cls)
     #     return cls._INSTANCE
 
-    def __init__(self, category_type: str):
+    def __init__(self, category_type: str, data_base=db):
         self.nodes = {}
         self.nodes_without_parent = {}
         self.root = Node("root")
 
-        cursor = db.cursor
+        cursor = data_base.cursor
         # cursor.execute("select id, name, measurement_unit, quantity from product_storage")
         cursor.execute(
             "select cl.target, cl.category from category_links cl join categories c on cl.category = c.category where c.type = ?", (category_type,))
@@ -193,8 +193,8 @@ def add_product(product_name: str, measurement_unit: str, data_base=db):
               {"name": product_name, "measurement_unit": measurement_unit})
 
 
-def get_products_in_storage(ids: Optional[List[int]]=None) -> List[ProductVolume]:
-    cursor = db.cursor
+def get_products_in_storage(ids: Optional[List[int]]=None, data_base=db) -> List[ProductVolume]:
+    cursor = data_base.cursor
     #cursor.execute("select id, name, measurement_unit, quantity from product_storage")
     cursor.execute("select p.id, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id group by p.id")
     rows = cursor.fetchall()
@@ -212,8 +212,9 @@ def get_products_in_storage(ids: Optional[List[int]]=None) -> List[ProductVolume
 def get_product_changes(user_ids: List[int]=None,
                         product_ids: List[int]=None,
                         from_date: datetime.date=None,
-                        to_date: datetime.date=None) -> dict:
-    cursor = db.cursor
+                        to_date: datetime.date=None,
+                        data_base=db) -> dict:
+    cursor = data_base.cursor
     result = defaultdict(lambda: defaultdict(list))
     # cursor.execute("select id, name, measurement_unit, quantity from product_storage")
     user_ids_condition = ""
@@ -250,13 +251,13 @@ def get_product_changes(user_ids: List[int]=None,
     #result = []
     for row in rows:
         product_id, quantity, user_id, created_date = row
-        product = get_product_by_id(product_id)
+        product = get_product_by_id(product_id, data_base)
         result[created_date][user_id].append(ProductVolumeWithPrice(product, quantity))
     return result
 
 
-def get_products_by_category(category: str) -> List[Product]:
-    cursor = db.cursor
+def get_products_by_category(category: str, data_base=db) -> List[Product]:
+    cursor = data_base.cursor
     cursor.execute("select p.id, p.name, p.measurement_unit from "
                    "products p join (select * from categories c join category_links cl on c.category = cl.category) pc on p.name = pc.target where pc.type = 'product_category' and pc.category = ?", (category,))
     rows = cursor.fetchall()
@@ -269,13 +270,13 @@ def get_products_by_category(category: str) -> List[Product]:
     return result
 
 
-def get_product_in_storage_by_name(product_name: str) -> Optional[ProductVolume]:
-    cursor = db.cursor
+def get_product_in_storage_by_name(product_name: str, data_base=db) -> Optional[ProductVolume]:
+    cursor = data_base.cursor
     cursor.execute("select p.id, p.name, p.measurement_unit, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id where p.name = (?)",
                    (product_name,))
     result = cursor.fetchone()
     if not result or not result[3]:
-        product = get_product_by_name(product_name)
+        product = get_product_by_name(product_name, data_base)
         if not product:
             return
         return ProductVolume(product.id, 0)
@@ -294,8 +295,8 @@ def get_product_by_name(product_name: str, data_base=db) -> Optional[ProductWith
     return ProductWithPrice(*result[:-1], prices)
 
 
-def get_products() -> List[ProductWithPrice]:
-    cursor = db.cursor
+def get_products(data_base=db) -> List[ProductWithPrice]:
+    cursor = data_base.cursor
     cursor.execute("select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') from products p LEFT JOIN product_price pp ON p.id = pp.product_id GROUP BY p.id")
     rows = cursor.fetchall()
     if not rows:
@@ -304,8 +305,8 @@ def get_products() -> List[ProductWithPrice]:
     return [ProductWithPrice(*row[:3], [float(price) for price in row[3].split(",")]) for row in rows]
 
 
-def get_product_by_id(product_id: int) -> Optional[ProductWithPrice]:
-    cursor = db.cursor
+def get_product_by_id(product_id: int, data_base=db) -> Optional[ProductWithPrice]:
+    cursor = data_base.cursor
     cursor.execute("select p.id, p.name, p.measurement_unit, GROUP_CONCAT(pp.price) from products p JOIN product_price pp ON p.id = pp.product_id where p.id = (?) group by p.id",
                    (product_id,))
     result = cursor.fetchone()
@@ -316,8 +317,8 @@ def get_product_by_id(product_id: int) -> Optional[ProductWithPrice]:
     return ProductWithPrice(*result[:-1], prices)
 
 
-def get_product_by_id_v0(product_id: int) -> Optional[Product]:
-    cursor = db.cursor
+def get_product_by_id_v0(product_id: int, data_base=db) -> Optional[Product]:
+    cursor = data_base.cursor
     cursor.execute("select p.id, p.name, p.measurement_unit, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id where p.id = (?) group by p.id",
                    (product_id,))
     result = cursor.fetchone()
@@ -326,8 +327,8 @@ def get_product_by_id_v0(product_id: int) -> Optional[Product]:
     return Product(*result)
 
 
-def increment(product_name: str, increment: float, action_id: int):
-    product = get_product_in_storage_by_name(product_name)
+def increment(product_name: str, increment: float, action_id: int, data_base=db):
+    product = get_product_in_storage_by_name(product_name, data_base)
     if not product:
         return
 
@@ -337,8 +338,8 @@ def increment(product_name: str, increment: float, action_id: int):
     #add_product(product.name, product.measurement_unit, quantity)
 
 
-def get_product_changes_by_action_id(action_id: int) -> List[ProductVolumeWithPrice]:
-    cursor = db.cursor
+def get_product_changes_by_action_id(action_id: int, data_base=db) -> List[ProductVolumeWithPrice]:
+    cursor = data_base.cursor
     cursor.execute(
         "select p.id, p.name, p.measurement_unit, p.price, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id where pc.action_id = (?) group by p.id",
         (action_id,))
@@ -354,12 +355,13 @@ def increment_products(increments: List[ProductVolume],
                        user_id: int,
                        action_type: ActionType,
                        date: datetime.date,
-                       comment: str=None):
+                       comment: str=None,
+                       data_base=db):
     if not comment:
         comment = ""
     action_id = new_action_get_id(action_type, user_id, date=date, comment=comment)
     for inc in increments:
-        product = get_product_by_id(inc.product_id)
+        product = get_product_by_id(inc.product_id, data_base)
         increment(product.name, inc.quantity, action_id)
 
 
@@ -370,9 +372,9 @@ def volumes_cost_sum(volumes: List[ProductVolumeWithPrice]) -> float:
     return sum_price
 
 
-def set_price(product_name: str, new_price: float):
-    product = get_product_by_name(product_name)
-    db.insert("product_price", {"product_id": product.id, "price": new_price})
+def set_price(product_name: str, new_price: float, data_base=db):
+    product = get_product_by_name(product_name, data_base)
+    data_base.insert("product_price", {"product_id": product.id, "price": new_price})
 
 
 def volumes_string(volumes: List[ProductVolumeWithPrice]) -> str:
@@ -393,10 +395,12 @@ def volumes_string(volumes: List[ProductVolumeWithPrice]) -> str:
     return result
 
 
-def get_product_categories_v0(max_level: int=1, parent_category: Optional[str]=None) -> Tuple[List[str], int]:
+def get_product_categories_v0(max_level: int=1,
+                              parent_category: Optional[str]=None,
+                              data_base=db) -> Tuple[List[str], int]:
     result = None
     while max_level != 0 and not result:
-        cursor = db.cursor
+        cursor = data_base.cursor
         if parent_category and max_level != 1:
             cursor.execute(
                 "select distinct cl.target from category_links cl join categories c on cl.category=c.category where type = 'product_category' and cl.category = ? and cl.hierarchy_level = ?",

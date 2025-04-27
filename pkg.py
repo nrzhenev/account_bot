@@ -55,14 +55,15 @@ class ActionType(Enum):
 def new_action_get_id(action_type: ActionType,
                       user_id: int,
                       date: Optional[datetime.date]=None,
-                      comment: Optional[str]=None) -> int:
+                      comment: Optional[str]=None,
+                      data_base=db) -> int:
     if not comment:
         comment = ""
     if not date:
         date = get_now_date()
-    db.insert("actions", {"action_type": action_type.name, "user_id": user_id,
+    data_base.insert("actions", {"action_type": action_type.name, "user_id": user_id,
                           "created": date, "comment": comment})
-    return max(db.fetchall("actions", ["action_id"])["action_id"])
+    return max(data_base.fetchall("actions", ["action_id"])["action_id"])
 
 
 async def verify_message_is_value(message) -> bool:
@@ -92,9 +93,9 @@ def get_now_formatted() -> str:
     return get_now_date().strftime("%Y-%m-%d")
 
 
-def save_message(db: DataBase, message: types.Message):
+def save_message(data_base: DataBase, message: types.Message):
     user_id = message.from_user.id
-    db.insert("messages",
+    data_base.insert("messages",
               {
                   "user_id": user_id,
                   "created": get_now_formatted(),
@@ -122,9 +123,6 @@ def get_dates_from_string(string: str, parsing_regime: str="DMY") -> List[dateti
         dates = [date[1] for date in found_dates]
         return dates
     return _get_dates_from_string(string, parsing_regime)
-
-
-data_base = DataBase()
 
 
 def _calc_dist_dictionary(short: str, long: str, dictionary=None, core_size=None) -> dict:
