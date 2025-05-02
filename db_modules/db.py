@@ -105,4 +105,14 @@ class ProductRepository(ProductRepositoryInterface):
             return
         return ProductWithPrice(*result[:-1], prices)
 
+    def get_all(self) -> List[ProductWithPrice]:
+        cursor = self.db.cursor
+        cursor.execute(
+            "select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') from products p LEFT JOIN product_price pp ON p.id = pp.product_id GROUP BY p.id")
+        rows = cursor.fetchall()
+        if not rows:
+            return []
+
+        return [ProductWithPrice(*row[:3], [float(price) for price in row[3].split(",")]) for row in rows]
+
 #check_db_exists()
