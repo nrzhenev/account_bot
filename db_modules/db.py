@@ -92,7 +92,14 @@ class ProductRepository(ProductRepositoryInterface):
         self.db = data_base
 
     def get_by_id(self, id: int) -> Optional[ProductWithPrice]:
-        pass
+        cursor = self.db.cursor
+        cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.id = (?)",
+                       (id,))
+        result = cursor.fetchone()
+        if not result:
+            return
+        prices_string = result[-1]
+        return ProductWithPrice(*result, prices_string)
 
     def get_by_name(self, name: str) -> Optional[ProductWithPrice]:
         cursor = self.db.cursor

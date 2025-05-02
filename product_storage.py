@@ -33,14 +33,8 @@ def get_products(data_base=db) -> List[ProductWithPrice]:
 
 
 def get_product_by_id(product_id: int, data_base=db) -> Optional[ProductWithPrice]:
-    cursor = data_base.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.id = (?)",
-                   (product_id,))
-    result = cursor.fetchone()
-    if not result:
-        return
-    prices_string = result[-1]
-    return Product(*result)
+    product_repository = ProductRepository(data_base)
+    return product_repository.get_by_id(product_id)
 
 
 def increment(product_name: str, increment: float, action_id: int, data_base=db):
