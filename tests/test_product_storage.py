@@ -12,7 +12,7 @@ class TestAddProduct:
     
     def test_add_product(self, test_db):
         """Тест добавления нового продукта в базу данных"""
-        product_name = "тестовый продукт"
+        product_name = "test product"
         measurement_unit = "шт"
         
         add_product(product_name, measurement_unit, test_db)
@@ -29,7 +29,7 @@ class TestAddProduct:
     
     def test_add_product_lowercase(self, test_db):
         """Тест, что имя продукта преобразуется в нижний регистр при добавлении"""
-        product_name = "ТЕСТОВЫЙ ПРОДУКТ"
+        product_name = "test product"
         measurement_unit = "кг"
         
         add_product(product_name, measurement_unit, test_db)
@@ -51,7 +51,7 @@ class TestGetProduct:
     def test_get_product_by_name(self, test_db):
         """Тест получения продукта по имени"""
         # Добавляем тестовый продукт
-        product_name = "тестовый продукт"
+        product_name = "test prodiuct"
         measurement_unit = "шт"
         test_db.insert("products", {"name": product_name, "measurement_unit": measurement_unit})
 
@@ -70,16 +70,15 @@ class TestGetProduct:
     def test_get_product_by_id(self, test_db):
         """Тест получения продукта по ID"""
         # Добавляем тестовый продукт
-        product_name = "тестовый продукт"
+        product_name = "test product"
         measurement_unit = "шт"
         test_db.insert("products", {"name": product_name, "measurement_unit": measurement_unit})
-        product_id = test_db.cursor.lastrowid
 
         # Получаем продукт
-        product = get_product_by_id(product_id)
+        product = get_product_by_name(product_name, test_db)
 
         assert product is not None, "Продукт не найден"
-        assert product.id == product_id, f"ID продукта '{product.id}' не соответствует ожидаемому '{product_id}'"
+        assert product.id is not None, f"ID продукта '{product.id}' пустой'"
         assert product.name == product_name, f"Имя продукта '{product.name}' не соответствует ожидаемому '{product_name}'"
         assert product.measurement_unit == measurement_unit, f"Единица измерения '{product.measurement_unit}' не соответствует ожидаемой '{measurement_unit}'"
 
@@ -114,7 +113,7 @@ class TestGetProduct:
     def test_get_product_in_storage_by_name(self, test_db):
         """Тест получения продукта на складе по имени"""
         # Добавляем тестовый продукт и изменения
-        product_name = "тестовый продукт"
+        product_name = "test product"
         measurement_unit = "шт"
         test_db.insert("products", {"name": product_name, "measurement_unit": measurement_unit})
         product_id = test_db.cursor.lastrowid

@@ -10,12 +10,14 @@ from db_modules.db import DataBase
 @pytest.fixture
 def test_db():
     """Создает тестовую базу данных и возвращает соединение с ней"""
-    # Создаем временную тестовую БД
-    test_db_path = "tests/db/test_finance.db"
-    
+    db_dir = "/home/nikita/git/account_bot/tests/db"
+    test_db_path = f"{db_dir}/test_finance.db"
+
     # Убедимся, что директория существует
-    os.makedirs(os.path.dirname(test_db_path), exist_ok=True)
-    
+    os.makedirs(os.path.dirname(db_dir), exist_ok=True)
+
+    os.chmod(db_dir, 0o777)
+
     # Удаляем существующую тестовую БД, если она есть
     if os.path.exists(test_db_path):
         os.remove(test_db_path)

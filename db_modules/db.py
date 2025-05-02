@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 from collections import defaultdict
 
 
-LOCAL_DB_NAME = "db/finance.db"
+LOCAL_DB_NAME = "/home/nikita/git/account_bot/db/finance.db"
 
 
 class DataBase:

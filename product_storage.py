@@ -307,14 +307,13 @@ def get_products(data_base=db) -> List[ProductWithPrice]:
 
 def get_product_by_id(product_id: int, data_base=db) -> Optional[ProductWithPrice]:
     cursor = data_base.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit, GROUP_CONCAT(pp.price) from products p JOIN product_price pp ON p.id = pp.product_id where p.id = (?) group by p.id",
+    cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.id = (?)",
                    (product_id,))
     result = cursor.fetchone()
     if not result:
         return
     prices_string = result[-1]
-    prices = [float(price) for price in prices_string.split(",")]
-    return ProductWithPrice(*result[:-1], prices)
+    return Product(*result)
 
 
 def get_product_by_id_v0(product_id: int, data_base=db) -> Optional[Product]:
