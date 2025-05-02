@@ -3,6 +3,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
+import domain.product
 import product_storage
 import users
 from auxiliary.system_functions import TEXT_PARSERS
@@ -129,7 +130,7 @@ async def storage_history_show(message: types.Message, state: FSMContext):
     from_date = data.get('from_date', get_now_date() - datetime.timedelta(days=200))
     #to_date = data.get(STORAGE_HISTORY_DATA[2])
     to_date = data.get('to_date', get_now_date())
-    product: product_storage.Product = data.get(STORAGE_HISTORY_DATA[1])
+    product: domain.product.Product = data.get(STORAGE_HISTORY_DATA[1])
     product_category = data.get(STORAGE_HISTORY_DATA[2])
 
     if worker_name:

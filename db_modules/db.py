@@ -4,6 +4,9 @@ import sqlite3
 from typing import Dict, List, Tuple
 from collections import defaultdict
 
+from db_modules.interface import ProductRepositoryInterface
+from domain.product import Product
+
 
 LOCAL_DB_NAME = "/home/nikita/git/account_bot/db/finance.db"
 
@@ -82,6 +85,14 @@ class DataBase:
         if table_exists:
             return
         self._init_db()
+
+
+class ProductRepository(ProductRepositoryInterface):
+    def __init__(self):
+        self.db = DataBase(LOCAL_DB_NAME)
+
+    def get_by_id(self, id: int) -> Product:
+        pass
 
 
 #check_db_exists()

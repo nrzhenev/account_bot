@@ -43,14 +43,14 @@ def test_db():
 @pytest.fixture
 def product_with_price():
     """Возвращает тестовый экземпляр ProductWithPrice"""
-    from product_storage import ProductWithPrice
+    from domain.product import ProductWithPrice
     return ProductWithPrice(1, "test_product", "kg", [10.0, 20.0, 30.0])
 
 # Фикстура для создания экземпляра Product
 @pytest.fixture
 def product():
     """Возвращает тестовый экземпляр Product"""
-    from product_storage import Product
+    from domain.product import Product
     return Product(1, "test_product", "kg")
 
 # Фикстура для создания тестового дерева категорий

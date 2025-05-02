@@ -8,7 +8,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 
 import money
 import product_storage
-from product_storage import ProductVolume
+from domain.product import ProductVolume
 #import poster_storage
 #from poster_storage import PosterStorage, ProductVolume, Product
 from pkg import dp, get_dates_from_string, get_most_similar_strings, get_keyboard, verify_message_is_value, ActionType, get_now_date_async

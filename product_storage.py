@@ -1,12 +1,12 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
 import datetime
 from collections import defaultdict
-from typing import NamedTuple, Optional, List, Tuple
+from typing import Optional, List
 
 import regex as re
-import numpy as np
 
 from db_modules.db import DataBase
+from domain.product import Product, ProductWithPrice, ProductVolume, ProductVolumeWithPrice
 from pkg import new_action_get_id, ActionType, db
 
 db = DataBase()
@@ -27,34 +27,6 @@ class Node:
         print(" " * spaces + self.key)
         for child in self.children:
             child.print(spaces + 1)
-
-
-class Product(NamedTuple):
-    id: int
-    name: str
-    measurement_unit: str
-
-
-class ProductWithPrice:
-    def __init__(self, id: int, name: str, measurement_unit: str, prices: List[float]):
-        self.id = id
-        self.name = name
-        self.measurement_unit = measurement_unit
-        self.prices = np.array(prices)
-
-    @property
-    def price(self):
-        return np.median(self.prices)
-
-
-class ProductVolume(NamedTuple):
-    product_id: int
-    quantity: float
-
-
-class ProductVolumeWithPrice(NamedTuple):
-    product: ProductWithPrice
-    quantity: float
 
 
 def parse_add_product_message(text: str) -> Product:

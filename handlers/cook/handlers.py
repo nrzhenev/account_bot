@@ -11,7 +11,7 @@ import aiogram
 import exceptions
 import money
 import product_storage
-from product_storage import ProductVolume
+from domain.product import ProductVolume
 #import poster_storage
 #from poster_storage import PosterStorage, ProductVolume, Product
 from pkg import dp, get_most_similar_strings, get_now_date, ActionType
