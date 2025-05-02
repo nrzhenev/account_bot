@@ -52,11 +52,6 @@ class ProductVolume(NamedTuple):
     quantity: float
 
 
-class ProductVolume2(NamedTuple):
-    product: Product
-    quantity: float
-
-
 class ProductVolumeWithPrice(NamedTuple):
     product: ProductWithPrice
     quantity: float
@@ -65,37 +60,6 @@ class ProductVolumeWithPrice(NamedTuple):
 def parse_add_product_message(text: str) -> Product:
     words = re.findall("\S+", text)[1:]
     return Product(-1, words[-2], words[-1])
-
-
-def increments_from_text(text: str):
-    pass
-    # """Парсит текст пришедшего сообщения о новом расходе."""
-    # regexp_result = re.findall(r"[\d]+ [^\d,.]+", text)
-    # result_messages = []
-    #
-    # for result in regexp_result:
-    #     amount = re.search("\d+", result).group()
-    #     category_text = re.search("(?<=\d+\s).+", result).group()
-    #     amount = int(amount.strip(" ,."))
-    #     category_text = category_text.strip(" ,.")
-    #     result_messages.append(ProductVolume(category_text, amount))
-    # return result_messages
-
-
-def increments_from_text0(text: str):
-    pass
-    # """Парсит текст пришедшего сообщения о новом расходе."""
-    # regexp_result = re.findall(r"[\d]+ [^\d,]+", text)
-    # result_messages = []
-    #
-    # for result in regexp_result:
-    #     amount = re.search("\d+", result).group()
-    #     category_text = re.search("(?<=\d+\s).+", result).group()
-    #     amount = float(amount.strip(" ,"))
-    #     name = category_text.strip(" ,")
-    #     increment(name, amount)
-    #     result_messages.append(ProductVolume(name, amount))
-    # return result_messages
 
 
 def add_product(product_name: str, measurement_unit: str, data_base=db):
