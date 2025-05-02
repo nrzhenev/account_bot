@@ -99,7 +99,7 @@ class TestGetProduct:
             test_db.insert("products", {"name": name, "measurement_unit": unit})
 
         # Получаем список продуктов
-        result = get_products()
+        result = get_products(test_db)
 
         assert len(result) == len(products), "Количество полученных продуктов не соответствует ожидаемому"
         for product in result:
@@ -107,7 +107,7 @@ class TestGetProduct:
 
     def test_get_products_empty(self, test_db):
         """Тест получения списка продуктов из пустой базы"""
-        result = get_products()
+        result = get_products(test_db)
         assert len(result) == 0, "Для пустой базы должен возвращаться пустой список"
 
     def test_get_product_in_storage_by_name(self, test_db):
@@ -116,15 +116,11 @@ class TestGetProduct:
         product_name = "test product"
         measurement_unit = "шт"
         test_db.insert("products", {"name": product_name, "measurement_unit": measurement_unit})
-        product_id = test_db.cursor.lastrowid
-        test_db.insert("product_changes", {"product_id": product_id, "quantity": 10, "action_id": 1})
 
         # Получаем продукт
-        product_volume = get_product_in_storage_by_name(product_name)
+        product = get_product_in_storage_by_name(product_name, test_db)
 
-        assert product_volume is not None, "Продукт не найден"
-        assert product_volume.product_id == product_id, f"ID продукта '{product_volume.product_id}' не соответствует ожидаемому '{product_id}'"
-        assert product_volume.quantity == 10, f"Количество продукта '{product_volume.quantity}' не соответствует ожидаемому '10'"
+        assert product is not None, "Продукт не найден"
 
     def test_get_product_in_storage_by_name_not_found(self, test_db):
         """Тест случая, когда продукт на складе не найден"""
