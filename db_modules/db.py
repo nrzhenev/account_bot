@@ -1,11 +1,11 @@
 import os
 
 import sqlite3
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
 from db_modules.interface import ProductRepositoryInterface
-from domain.product import Product
+from domain.product import ProductWithPrice
 
 
 LOCAL_DB_NAME = "/home/nikita/git/account_bot/db/finance.db"
@@ -88,11 +88,21 @@ class DataBase:
 
 
 class ProductRepository(ProductRepositoryInterface):
-    def __init__(self):
-        self.db = DataBase(LOCAL_DB_NAME)
+    def __init__(self, data_base):
+        self.db = data_base
 
-    def get_by_id(self, id: int) -> Product:
+    def get_by_id(self, id: int) -> Optional[ProductWithPrice]:
         pass
 
+    def get_by_name(self, name: str) -> Optional[ProductWithPrice]:
+        cursor = self.db.cursor
+        cursor.execute(
+            "select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from products p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
+            (name,))
+        result = cursor.fetchone()
+        id, name, measurement_unit, prices = result
+        if not (id and name):
+            return
+        return ProductWithPrice(*result[:-1], prices)
 
 #check_db_exists()

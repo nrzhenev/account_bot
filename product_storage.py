@@ -5,7 +5,7 @@ from typing import Optional, List
 
 import regex as re
 
-from db_modules.db import DataBase
+from db_modules.db import DataBase, ProductRepository
 from domain.product import Product, ProductWithPrice, ProductVolume, ProductVolumeWithPrice
 from pkg import new_action_get_id, ActionType, db
 
@@ -19,28 +19,12 @@ def add_product(product_name: str, measurement_unit: str, data_base=db):
 
 
 def get_product_in_storage_by_name(product_name: str, data_base=db) -> Optional[ProductVolume]:
-    cursor = data_base.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit, SUM(pc.quantity) from products p join product_changes pc on p.id = pc.product_id where p.name = (?)",
-                   (product_name,))
-    result = cursor.fetchone()
-    if not result or not result[3]:
-        product = get_product_by_name(product_name, data_base)
-        if not product:
-            return
-        return ProductVolume(product.id, 0)
-    return ProductVolume(result[0], result[3])
+    return get_product_by_name(product_name, data_base)
 
 
 def get_product_by_name(product_name: str, data_base=db) -> Optional[ProductWithPrice]:
-    cursor = data_base.cursor
-    cursor.execute("select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from products p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
-                   (product_name,))
-    result = cursor.fetchone()
-    id, name, measurement_unit, prices = result
-    if not (id and name):
-        return
-    prices = [float(price) for price in result[3].split(",")]
-    return ProductWithPrice(*result[:-1], prices)
+    product_repository = ProductRepository(data_base)
+    return product_repository.get_by_name(product_name)
 
 
 def get_products(data_base=db) -> List[ProductWithPrice]:
