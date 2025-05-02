@@ -75,18 +75,6 @@ async def get_actions(message: types.Message, state: FSMContext):
     await message.answer("Выберите действие", reply_markup=kb)
 
 
-@dp.message_handler(IsAdmin(), lambda message: message.text=="storage", state=AdminStates.INITIAL_STATE)
-async def storage(message: types.Message):
-    """Отправляет сегодняшнюю статистику трат"""
-    products = product_storage.get_products_in_storage()
-    products = [product for product in products if product.quantity]
-    answer_string = "Склад:"
-    for product_volume in products:
-        product = product_storage.get_product_by_id(product_volume.product_id)
-        answer_string += "\n" + f"{product.name}: {product_volume.quantity} {product.measurement_unit}"
-    await message.answer(answer_string)
-
-
 async def _get_most_similar(message: types.Message, state: FSMContext):
     if message.text in []:
         pass

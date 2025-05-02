@@ -173,29 +173,6 @@ def create_range_keyboard(products_range: str, names: List[str]) -> ReplyKeyboar
     return keyboard
 
 
-async def get_products_keyboard(products_range: str, products_category: Optional[str]=None):
-    from_id, to_id = re.findall("\d+", products_range)
-    ids = list(range(int(from_id), int(to_id)+1))
-    min_id = min(ids)
-    max_id = max(ids)
-    #ps = poster_storage.PosterStorage()
-    #products = await ps.get_products(min_id, max_id)
-    products = product_storage.get_products_by_category(products_category)
-    products = products[min_id: max_id + 1]
-    names = [pr.name for pr in products]
-    previous_range = [f"{max(0, min_id - PRODUCTS_RANGE)}-{min_id-1} <="]
-    next_range = [f"=> {max_id + 1}-{max_id + PRODUCTS_RANGE}"]
-    if len(products) != max_id - min_id + 1:
-        next_range = []
-    if min_id == 0:
-        previous_range = []
-    keyboard = get_keyboard(previous_range + names + next_range)
-    texts = ["Категории", "Показать списание", "В начало"]
-    buttons = [KeyboardButton(text=text) for text in texts]
-    keyboard.add(*buttons)
-    return keyboard
-
-
 @dp.message_handler(IsCookRole(), lambda message: message.text in ["Ввести списание", "Категории"], state=CookStates.INITIAL_STATE)
 async def products_categories(message: types.Message, state: FSMContext):
     #ps = poster_storage.PosterStorage()

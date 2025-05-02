@@ -52,38 +52,3 @@ def product():
     """Возвращает тестовый экземпляр Product"""
     from domain.product import Product
     return Product(1, "test_product", "kg")
-
-# Фикстура для создания тестового дерева категорий
-@pytest.fixture
-def category_tree():
-    """Возвращает тестовое дерево категорий"""
-    from product_storage import CategoriesTree, Node
-    
-    # Создаем дерево без обращения к бд
-    tree = CategoriesTree.__new__(CategoriesTree)
-    tree.nodes = {}
-    tree.nodes_without_parent = {}
-    tree.root = Node("root")
-    
-    # Добавляем структуру дерева для тестирования
-    parent1 = Node("parent1")
-    parent2 = Node("parent2")
-    child1 = Node("child1")
-    child2 = Node("child2")
-    
-    tree.root.add_child(parent1)
-    tree.root.add_child(parent2)
-    parent1.add_child(child1)
-    parent2.add_child(child2)
-    
-    tree.nodes = {
-        "child1": child1,
-        "child2": child2,
-    }
-    
-    tree.nodes_without_parent = {
-        "parent1": parent1,
-        "parent2": parent2,
-    }
-    
-    return tree 

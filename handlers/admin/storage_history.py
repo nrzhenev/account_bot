@@ -79,23 +79,6 @@ async def storage_history_add_restriction_worker_name(message: types.Message, st
 
 
 @dp.message_handler(IsAdmin(),
-                    lambda message: message.text in STORAGE_HISTORY_RESTRICTIONS[1:2] + STORAGE_HISTORY_AUXILIARY_ACTIONS,
-                    state=StorageHistoryStates.WAITING_CHOOSE_RESTRICTIONS)
-async def storage_history_add_restriction_date(message: types.Message):
-    changes = product_storage.get_product_changes()
-    if not changes:
-        await message.answer("Нет поступлений", reply_markup=get_initial_keyboard())
-        return
-    answer_string = ""
-    for date in sorted(changes):
-        answer_string += date
-        for user_id in changes[date]:
-            user = get_user_by_id(user_id)
-            answer_string += f"\n{user.name}:" + product_storage.volumes_string(changes[date][user_id]) + "\n"
-    await message.answer(answer_string)
-
-
-@dp.message_handler(IsAdmin(),
                     lambda message: message.text==STORAGE_HISTORY_RESTRICTIONS[2],
                     state=StorageHistoryStates.WAITING_CHOOSE_RESTRICTIONS)
 async def storage_history_add_restriction_product(message: types.Message, state=FSMContext):
@@ -113,71 +96,6 @@ async def storage_history_add_restriction_product(message: types.Message, state=
     await state.update_data({STORAGE_HISTORY_DATA[1]: name})
     await message.answer(f"Добавлено ограничение по имени: {name}")
     await storage_history(message)
-
-
-@dp.message_handler(IsAdmin(),
-                    lambda message: message.text in [STORAGE_HISTORY_ACTIONS[0]],
-                    state=StorageHistoryStates.WAITING_CHOOSE_ACTION)
-async def storage_history_show(message: types.Message, state: FSMContext):
-    """Выбрать статистику по изменениям в продуктах"""
-    action = message.text
-    if action == STORAGE_HISTORY_AUXILIARY_ACTIONS[0]:
-        return await get_initial_message(message)
-
-    data = await state.get_data()
-    worker_name = data.get(STORAGE_HISTORY_DATA[0])
-    #from_date = data.get(STORAGE_HISTORY_DATA[1])
-    from_date = data.get('from_date', get_now_date() - datetime.timedelta(days=200))
-    #to_date = data.get(STORAGE_HISTORY_DATA[2])
-    to_date = data.get('to_date', get_now_date())
-    product: domain.product.Product = data.get(STORAGE_HISTORY_DATA[1])
-    product_category = data.get(STORAGE_HISTORY_DATA[2])
-
-    if worker_name:
-        worker = users.get_user_by_name(worker_name)
-        user_ids = [worker.user_id]
-    else:
-        user_ids = None
-
-    if product:
-        product_ids = [product.id]
-    else:
-        product_ids = None
-
-    changes = product_storage.get_product_changes(user_ids=user_ids,
-                                                  product_ids=product_ids,
-                                                  from_date=from_date,
-                                                  to_date=to_date)
-
-    if not changes:
-        await message.answer("Нет поступлений", reply_markup=get_initial_keyboard())
-        return
-    parsing_mode = "HTML"
-    bold = TEXT_PARSERS[parsing_mode]["bold"]
-    result_string = ""
-    result_sum = 0
-    answers = []
-    sorted_changes = sorted(changes)
-    for date in sorted_changes:
-        answer_string = ""
-        answer_string += f"\n\n<b>{date}</b>"
-        for user_id in changes[date]:
-            user = get_user_by_id(user_id)
-            #answer_string += "<i>Курсив</i> <b>жирный</b> <i><b>жирный курсив</b></i>"
-            #answer_string += "*a* **b** ***c***\n"
-            answer_string += f"\n<u><i>{user.name}</i></u>:" + product_storage.volumes_string(changes[date][user_id]) + "\n"
-            cost_sum = product_storage.volumes_cost_sum(changes[date][user_id])
-            answer_string += bold(f"{cost_sum} лари\n")
-            result_sum += cost_sum
-        if len(result_string + answer_string) > 4000:
-            answers.append(result_string)
-            result_string = answer_string
-        else:
-            result_string += answer_string
-    result_string += bold(f"\nВсего {result_sum} лари")
-    answers.append(result_string)
-    for answer in answers:
-        await message.answer(answer, parse_mode=parsing_mode)
 
 
 STORAGE_HISTORY_ACTIONS = ["Показать", "Добавить условие поиска", "Убрать условие поиска"]
