@@ -13,9 +13,8 @@ db = DataBase()
 
 
 def add_product(product_name: str, measurement_unit: str, data_base=db):
-    product_name = product_name.lower()
-    data_base.insert("products",
-              {"name": product_name, "measurement_unit": measurement_unit})
+    product_repository = ProductRepository(data_base)
+    return product_repository.add_product(product_name, measurement_unit)
 
 
 def get_product_in_storage_by_name(product_name: str, data_base=db) -> Optional[ProductVolume]:

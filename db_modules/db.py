@@ -122,4 +122,9 @@ class ProductRepository(ProductRepositoryInterface):
 
         return [ProductWithPrice(*row[:3], [float(price) for price in row[3].split(",")]) for row in rows]
 
+    def add_product(self, name: str, measurement_unit: str):
+        product_name = name.lower()
+        self.db.insert("products",
+                         {"name": product_name, "measurement_unit": measurement_unit})
+
 #check_db_exists()
