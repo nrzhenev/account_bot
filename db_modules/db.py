@@ -4,7 +4,7 @@ import sqlite3
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
-from db_modules.interface import ProductRepositoryInterface
+from db_modules.interface import ProductRepositoryInterface, ProductChangesRepositoryInterface
 from domain.product import ProductWithPrice
 
 
@@ -126,5 +126,37 @@ class ProductRepository(ProductRepositoryInterface):
         product_name = name.lower()
         self.db.insert("products",
                          {"name": product_name, "measurement_unit": measurement_unit})
+
+
+class ProductChangesRepository(ProductChangesRepositoryInterface):
+    def __init__(self, data_base):
+        self.db = data_base
+        self.pr = ProductRepository(data_base)
+
+    def increment_products(*args):
+        pass
+        # self,
+    #                        increments: List[ProductVolume],
+    #                        user_id: int,
+    #                        action_type: ActionType,
+    #                        date: datetime.date,
+    #                        comment: str = None
+    #                        ):
+    #     def increment(product: ProductWithPrice, increment: float, action_id: int, data_base=db):
+    #         if not product:
+    #             return
+    #
+    #         # quantity = product.quantity + increment
+    #         self.db.insert("product_changes",
+    #                   {"product_id": product.product_id, "quantity": increment, "action_id": action_id})
+    #         # db.delete("product_storage", {"name": product.name})
+    #         # add_product(product.name, product.measurement_unit, quantity)
+    #
+    #     if not comment:
+    #         comment = ""
+    #     action_id = new_action_get_id(action_type, user_id, date=date, comment=comment)
+    #     for inc in increments:
+    #         product = get_product_by_id(inc.product_id, data_base)
+            #increment(product, inc.quantity, action_id)
 
 #check_db_exists()
