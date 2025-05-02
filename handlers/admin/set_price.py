@@ -41,22 +41,4 @@ async def set_price_chose_product_final(message: types.Message, state: FSMContex
     await message.answer(f"Встречающиеся цены продукта {product.prices}\nДобавьте новые встречающиеся цены через запятую")
 
 
-@dp.message_handler(IsAdmin(), state=SetPriceStates.WAITING_NEW_PRICE)
-async def set_price_waiting_value(message: types.Message, state: FSMContext):
-    value = message.text
-    prices = value.split(",")
-    if not prices:
-        await message.answer("Введите цены через запятую")
-        return
-
-    data = await state.get_data()
-    product = data.get("SET_PRICE_PRODUCT")
-    if not product:
-        return
-    for price in prices:
-        product_storage.set_price(product.name, float(price))
-    await message.answer(f"Установили цены {prices} на {product.name}")
-    await set_price(message, state)
-
-
 SET_PRICE_VARIABLES = ["SET_PRICE_PRODUCT"]

@@ -20,7 +20,7 @@ def init_handlers():
     from handlers.admin.money_transfer import transfer_money
     from handlers.admin.set_date_interval import choose_action
     from handlers.admin.set_price import set_price
-    from handlers.admin.storage_history import storage_history_show
+    from handlers.admin.storage_history import storage_history_add_restriction
 
 
 init_handlers()
