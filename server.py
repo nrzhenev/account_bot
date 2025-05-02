@@ -7,7 +7,6 @@ from aiogram import executor
 
 #import poster_storage
 from pkg import dp
-from product_storage import CategoriesTree
 from db_modules.db import DataBase
 from handlers.expenses import initial_handlers
 from handlers.priority_handlers import chr
@@ -89,13 +88,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 def pre_initialize():
-    tree = CategoriesTree()
     cursor = db.cursor
     # cursor.execute("select id, name, measurement_unit, quantity from product_storage")
     cursor.execute(
         "select target, category from category_links")
-    rows = cursor.fetchall()
-    tree.build_tree(rows)
 
 
 def start_polling():

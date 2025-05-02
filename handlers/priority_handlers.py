@@ -3,7 +3,7 @@ import re
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
-from pkg import dp, data_base
+from pkg import dp, db
 
 
 @dp.message_handler(commands=["role"], state='*')
@@ -16,5 +16,5 @@ async def chr(message: types.Message, state: FSMContext):
     await state.finish()
     user_id = message.from_user.id
     role = int(role.group())
-    data_base.update("users", {"user_id": user_id, "current_role_id": role})
+    db.update("users", {"user_id": user_id, "current_role_id": role})
     await message.answer(f"Changed role to {role}")
