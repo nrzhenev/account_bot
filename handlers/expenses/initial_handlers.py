@@ -56,7 +56,7 @@ async def expenses_start_2(message: types.Message, state: FSMContext):
 @dp.message_handler(IsExpensesRole(),
                     lambda message: message.text == RETURN_BUTTON,
                     state="*")
-async def expenses_start_2(message: types.Message, state: FSMContext):
+async def expenses_start_return(message: types.Message, state: FSMContext):
     await state.reset_state()
     await ExpensesInitialStates.INITIAL_STATE.set()
     keyboard = get_initial_keyboard()

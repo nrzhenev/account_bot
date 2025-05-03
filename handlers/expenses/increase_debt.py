@@ -89,9 +89,10 @@ async def process_debt_quantity(message: types.Message, state: FSMContext):
         increment = -increment
 
     dr = DebtsRepository(DataBase(LOCAL_DB_NAME))
-    current_quantity = dr.get_by_name(debt_actor)
-    post_quantitny = current_quantity + increment
-    dr.set(debt_actor, post_quantitny)
+    debt = dr.get_by_name(debt_actor)
+    current_quantity = debt.amount if debt else 0
+    post_quantity = current_quantity + increment
+    dr.set(debt_actor, post_quantity)
     
-    await message.answer(f"Долг у {debt_actor} {action_text} на {increment} лари")
-    await ExpensesInitialStates.INITIAL_STATE.set()
+    await message.answer(f"Долг у {debt_actor} {action_text} на {increment} лари\nИтоговый долг у {debt_actor}: {post_quantity}")
+    await state.reset_state()
