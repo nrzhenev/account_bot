@@ -7,3 +7,7 @@ class ProductRepositoryInterface(ABC):
 
 class ProductChangesRepositoryInterface(ABC):
     pass
+
+
+class DebtsRepositoryInterface(ABC):
+    pass

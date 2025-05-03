@@ -14,11 +14,11 @@ class ProductWithPrice:
         self.id = id
         self.name = name
         self.measurement_unit = measurement_unit
-        self.prices = np.array(prices)
+        self.prices = prices
 
     @property
     def price(self):
-        return np.median(self.prices)
+        return np.median(np.ndarray(self.prices))
 
 
 class ProductVolume(NamedTuple):

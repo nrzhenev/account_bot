@@ -74,4 +74,4 @@ async def process_quantity(message: types.Message):
     if not quantity:
         await message.answer("Введите число в формате 331.12 или 232")
         return
-    return quantity.group()
+    return float(quantity.group())

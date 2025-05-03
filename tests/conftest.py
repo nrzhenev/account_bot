@@ -8,7 +8,7 @@ from db_modules.db import DataBase
 
 # Фикстура для создания тестовой базы данных
 @pytest.fixture
-def test_db():
+def temporary_db():
     """Создает тестовую базу данных и возвращает соединение с ней"""
     db_dir = "/home/nikita/git/account_bot/tests/db"
     test_db_path = f"{db_dir}/test_finance.db"

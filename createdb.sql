@@ -13,6 +13,13 @@ create table if not exists money(
 );
 
 
+create table if not exists debts(
+    company_name varchar(40),
+    amount float,
+    UNIQUE (company_name)
+);
+
+
 create table if not exists categories(
     category varchar(80),
     type varchar(40),

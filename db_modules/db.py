@@ -4,8 +4,9 @@ import sqlite3
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
-from db_modules.interface import ProductRepositoryInterface, ProductChangesRepositoryInterface
+from db_modules.interface import ProductRepositoryInterface, ProductChangesRepositoryInterface, DebtsRepositoryInterface
 from domain.product import ProductWithPrice
+from domain.money_actor import MoneyActor
 
 
 LOCAL_DB_NAME = "/home/nikita/git/account_bot/db/finance.db"
@@ -107,9 +108,10 @@ class ProductRepository(ProductRepositoryInterface):
             "select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from products p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
             (name,))
         result = cursor.fetchone()
-        id, name, measurement_unit, prices = result
+        id, name, measurement_unit, prices_string = result
         if not (id and name):
             return
+        prices = prices_string.split(",")
         return ProductWithPrice(*result[:-1], prices)
 
     def get_all(self) -> List[ProductWithPrice]:
@@ -158,5 +160,29 @@ class ProductChangesRepository(ProductChangesRepositoryInterface):
     #     for inc in increments:
     #         product = get_product_by_id(inc.product_id, data_base)
             #increment(product, inc.quantity, action_id)
+
+
+class DebtsRepository(DebtsRepositoryInterface):
+    def __init__(self, data_base):
+        self.db = data_base
+
+    def get_by_name(self, name: str) -> Optional[MoneyActor]:
+        cursor = self.db.cursor
+        cursor.execute(
+            "select d.company_name, d.amount from debts d where d.company_name = (?)",
+            (name,))
+        result = cursor.fetchone()
+        if not result:
+            return
+
+        company_name, amount = result
+        if not (company_name and amount):
+            return
+        return MoneyActor(0, company_name, amount)
+
+    def set(self, name: str, amount: float):
+        self.db.insert("debts",
+                       {"company_name": name, "amount": amount})
+
 
 #check_db_exists()

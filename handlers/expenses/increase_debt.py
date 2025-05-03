@@ -10,6 +10,7 @@ from handlers.roles import IsExpensesRole
 # import poster_storage
 # from poster_storage import PosterStorage, ProductVolume, Product
 from pkg import dp
+from db_modules.db import DebtsRepository, DataBase, LOCAL_DB_NAME
 
 MODULE_NAME = "increase_debt"
 
@@ -74,14 +75,23 @@ async def handle_category_other(message: types.Message, state: FSMContext):
 @dp.message_handler(IsExpensesRole(),
                     state=DebtStates.WAITING_DEBT_QUANTITY)
 async def process_debt_quantity(message: types.Message, state: FSMContext):
-    quantity = await process_quantity(message)
-    if quantity is None:
+    increment = await process_quantity(message)
+    if increment is None:
         return
 
     data = await state.get_data()
     debt_actor = data["debt_actor"]
     debt_action = data.get("debt_action", "")
     action_text = "увеличен" if "Увеличить" in debt_action else "уменьшен"
+
+    increment = abs(increment)
+    if action_text == "уменьшен":
+        increment = -increment
+
+    dr = DebtsRepository(DataBase(LOCAL_DB_NAME))
+    current_quantity = dr.get_by_name(debt_actor)
+    post_quantitny = current_quantity + increment
+    dr.set(debt_actor, post_quantitny)
     
-    await message.answer(f"Долг у {debt_actor} {action_text} на {quantity} лари")
+    await message.answer(f"Долг у {debt_actor} {action_text} на {increment} лари")
     await ExpensesInitialStates.INITIAL_STATE.set()
