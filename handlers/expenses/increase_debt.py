@@ -109,7 +109,18 @@ async def process_debt_quantity(message: types.Message, state: FSMContext):
     debt = dr.get_by_name(debt_actor)
     current_quantity = debt.amount if debt else 0
     post_quantity = current_quantity + increment
+
+    if current_quantity <= 0 and increment < 0:
+        await message.answer(
+            f"Невозможно вернуть долг {debt_actor} через {payment_method}\nВы ничего ему не должны\nВозвращаемся в начало")
+        await state.reset_state()
+        return
+    elif post_quantity < 0:
+        await message.answer(
+            f"Невозможно уменьшить долг {debt_actor} на {abs(increment)} лари\nВы должны {current_quantity} лари\nВозвращаемся в начало")
+        await state.reset_state()
+        return
+
     dr.set(debt_actor, post_quantity)
-    
-    await message.answer(f"Долг у {debt_actor} {action_text} на {increment} через {payment_method} лари\nИтоговый долг у {debt_actor}: {post_quantity}")
+    await message.answer(f"Долг у {debt_actor} {action_text} на {abs(increment)} через {payment_method} лари\nИтоговый долг у {debt_actor}: {post_quantity}")
     await state.reset_state()
