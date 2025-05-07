@@ -3,6 +3,7 @@ import os
 import sqlite3
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
+import pandas as pd
 
 from db_modules.interface import ProductRepositoryInterface, ProductChangesRepositoryInterface, DebtsRepositoryInterface
 from domain.product import ProductWithPrice
@@ -77,6 +78,17 @@ class DataBase:
             sql = f.read()
         self.cursor.executescript(sql)
         self.conn.commit()
+
+        self._pre_initialize_products()
+
+    def _pre_initialize_products(self):
+        df = pd.read_excel('data/preinitialization.xlsx')
+        df = df[["name", "measurement_unit"]]
+
+        conn = sqlite3.connect('db/finance.db')
+
+        # Шаг 3: Запись данных в таблицу SQLite
+        df.to_sql('products', conn, if_exists='append', index=False)
 
     def check_db_exists(self):
         """Проверяет, инициализирована ли БД, если нет — инициализирует"""

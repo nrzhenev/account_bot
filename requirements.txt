@@ -1,15 +1,14 @@
 aiogram==2.4
-aiohttp==3.6.2
 alembic==1.13.2
-async-timeout==3.0.1
+async-timeout==5.0.1
 attrs==19.3.0
 Babel==2.7.0
 certifi==2019.11.28
 chardet==3.0.4
 idna==2.8
 multidict==4.7.3
-pytz==2019.3
-yarl==1.4.2
+pytz==2020.1
+yarl==1.18
 regex
 dateparser
 #pytest
@@ -18,3 +17,5 @@ requests
 sqlalchemy
 pytest==7.1.2
 numpy==1.24.4
+pandas==2.2.3
+aiohttp==3.11
