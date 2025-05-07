@@ -19,6 +19,7 @@ class DebtStates(StatesGroup):
     WAITING_CHOOSE_DEBT_ACTION = State()
     WAITING_CHOOSE_DEBT_ACTOR = State()
     WAITING_OTHER_DEBT_ACTOR = State()
+    WAITING_DEBT_RETURN_METHOD = State()
     WAITING_DEBT_QUANTITY = State()
 
 
@@ -49,6 +50,21 @@ async def debt_initial_actions(message: types.Message, state: FSMContext):
                     state=DebtStates.WAITING_CHOOSE_DEBT_ACTION)
 async def handle_category_other(message: types.Message, state: FSMContext):
     await state.update_data(debt_action=message.text)
+    if "уменьш" in message.text.lower():
+        await DebtStates.WAITING_DEBT_RETURN_METHOD.set()
+        keyboard = keyboard_with_return_button(["Карта", "Наличные"])
+        await message.answer(f"Выберите метод возврата долга {message.text.lower()}", reply_markup=keyboard)
+        return
+    await DebtStates.WAITING_CHOOSE_DEBT_ACTOR.set()
+    keyboard = keyboard_with_return_button(DEBT_ACTORS)
+    await message.answer(f"Выберите кому {message.text.lower()}", reply_markup=keyboard)
+
+
+@dp.message_handler(IsExpensesRole(),
+                    lambda message: message.text in ["Карта", "Наличные"],
+                    state=DebtStates.WAITING_DEBT_RETURN_METHOD)
+async def handle_debt_actor_other(message: types.Message, state: FSMContext):
+    await state.update_data(payment_method=message.text)
     await DebtStates.WAITING_CHOOSE_DEBT_ACTOR.set()
     keyboard = keyboard_with_return_button(DEBT_ACTORS)
     await message.answer(f"Выберите кому {message.text.lower()}", reply_markup=keyboard)
@@ -82,6 +98,7 @@ async def process_debt_quantity(message: types.Message, state: FSMContext):
     data = await state.get_data()
     debt_actor = data["debt_actor"]
     debt_action = data.get("debt_action", "")
+    payment_method = data.get("payment_method", "")
     action_text = "увеличен" if "Увеличить" in debt_action else "уменьшен"
 
     increment = abs(increment)
@@ -94,5 +111,5 @@ async def process_debt_quantity(message: types.Message, state: FSMContext):
     post_quantity = current_quantity + increment
     dr.set(debt_actor, post_quantity)
     
-    await message.answer(f"Долг у {debt_actor} {action_text} на {increment} лари\nИтоговый долг у {debt_actor}: {post_quantity}")
+    await message.answer(f"Долг у {debt_actor} {action_text} на {increment} через {payment_method} лари\nИтоговый долг у {debt_actor}: {post_quantity}")
     await state.reset_state()
