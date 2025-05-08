@@ -1,1 +1,1 @@
-from handlers.barmen.receiving_by_hand import get_initial_keyboard
+from handlers.barmen.initial_handlers import barmen_start
