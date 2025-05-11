@@ -1,21 +1,20 @@
 """Сервер Telegram бота, запускаемый непосредственно"""
 import asyncio
 import logging
-import time
 
-from aiogram import executor
-
-#import poster_storage
-from pkg import dp
 from db_modules.db import DataBase
-from handlers.expenses import initial_handlers
-from handlers.priority_handlers import chr
-from handlers.admin.handlers import UserStates
-from handlers.barmen.handlers import get_keyboard
-from handlers.cook.handlers import show_shipment
+# from handlers.expenses import initial_handlers
+# from handlers.priority_handlers import chr
+# from handlers.admin.handlers import UserStates
+from handlers.barmen.initial_handlers import barmen_router
+# import poster_storage
+from pkg import dp, bot
+
+#from handlers.cook.handlers import show_shipment
 
 
 db = DataBase()
+dp.include_router(barmen_router)
 
 
 expenses_ = '⚙️ Вносить траты'
@@ -90,26 +89,20 @@ logging.basicConfig(level=logging.INFO)
 def pre_initialize():
     cursor = db.cursor
     # cursor.execute("select id, name, measurement_unit, quantity from product_storage")
-    cursor.execute(
-        "select target, category from category_links")
+    cursor.execute("select target, category from category_links")
 
 
-def start_polling():
-    try:
-        executor.start_polling(dp, skip_updates=True)
-    except:
-        logging.warning("Trying to reconnect")
-        time.sleep(5)
-        start_polling()
+async def start_polling():
+    await dp.start_polling(bot)
 
-
-import os
+async def main():
+    await start_polling()
 
 
 if __name__ == '__main__':
     #ps = poster_storage.PosterStorage()
     #asyncio.run(ps.async_init())
     #pre_initialize()
-    start_polling()
+    asyncio.run(main())
     #os.remove("/home/rzhenev/personal/account_bot/db/finance.db")
     print(1)

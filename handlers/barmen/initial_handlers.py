@@ -1,13 +1,15 @@
 from aiogram import types, Router, F
-from aiogram.dispatcher import FSMContext
+from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.state import StatesGroup, State
 
 from handlers.roles import IsShipmentsRole
-from pkg import get_keyboard
+from pkg import get_keyboard, ACCESS_IDS
+from middlewares import AccessMiddleware
 
 # Создаем роутер для обработчиков бармена
 barmen_router = Router()
+barmen_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
 
 
 class BarmenInitialStates(StatesGroup):

@@ -2,16 +2,17 @@
 from typing import List
 
 from aiogram import types
-from aiogram.dispatcher.handler import CancelHandler
-from aiogram.dispatcher.middlewares import BaseMiddleware
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
 
 
 class AccessMiddleware(BaseMiddleware):
-    def __init__(self, access_ids: List[int]):
-        self.access_ids = [int(i) for i in access_ids]
+    def __init__(self, allowed_user_ids: list):
+        self.allowed_user_ids = allowed_user_ids
         super().__init__()
 
-    async def on_process_message(self, message: types.Message, _):
-        if int(message.from_user.id) not in self.access_ids:
-            await message.answer("Access Denied")
-            raise CancelHandler()
+    async def __call__(self, handler, event: types.Message, data: dict):
+        # Проверка ID пользователя
+        if event.from_user.id not in self.allowed_user_ids:
+            await event.answer("У вас нет доступа к этому боту.")
+            return None  # Останавливает дальнейшую обработку сообщения
+        return await handler(event, data)

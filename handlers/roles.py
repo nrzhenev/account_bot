@@ -2,12 +2,12 @@ from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import Optional
 
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher.filters import BoundFilter
 
 import expenses
 import users
 from db_modules.db import DataBase
+from aiogram.types import Message
+from aiogram.filters import Filter
 import shipment
 import categories
 
@@ -35,7 +35,7 @@ def get_user_role(user_id: int) -> Roles:
 
 class RoleInterface(ABC):
     @abstractmethod
-    def handle_message(self, message: types.Message):
+    def handle_message(self, message: Message):
         pass
 
     @abstractmethod
@@ -62,7 +62,7 @@ class Role(RoleInterface):
     def __init__(self, db: DataBase):
         self.db = db
 
-    def handle_message(self, message: types.Message):
+    def handle_message(self, message: Message):
         raise NotImplementedError
 
     @property
@@ -77,7 +77,7 @@ class Role(RoleInterface):
 #
 #
 # class Shipments(Role):
-#     def handle_message(self, message: types.Message):
+#     def handle_message(self, message: Message):
 #         expenses_list = expenses.add_expenses(message.text)
 #         amount = sum([expense.amount for expense in expenses_list])
 #         answer_message = (
@@ -91,7 +91,7 @@ class Role(RoleInterface):
 
 
 class Expenses(Role):
-    def handle_message(self, message: types.Message):
+    def handle_message(self, message: Message):
         expenses_list = expenses.process_expenses_message(message)
         amount = sum([expense.amount for expense in expenses_list])
         exp_list = expenses.get_today_expenses()
@@ -106,11 +106,11 @@ class Expenses(Role):
         return 2
 
 
-class IsExpenses(BoundFilter):
+class IsExpenses:
     def __init__(self, db: DataBase):
         self.db = db
 
-    async def check(self, message: types.Message):
+    async def check(self, message: Message):
         user_id = message.from_user.id
         current_role = _get_current_role_id(self.db, user_id)
         if current_role == 2:
@@ -118,36 +118,36 @@ class IsExpenses(BoundFilter):
         return False
 
 
-class IsAdmin(BoundFilter):
-    async def check(self, message: types.Message):
+class IsAdmin:
+    async def check(self, message: Message):
         user_id = message.from_user.id
         role = get_user_role(user_id)
         return role is Roles.ADMIN
 
 
-class IsExpensesRole(BoundFilter):
-    async def check(self, message: types.Message):
+class IsExpensesRole:
+    async def check(self, message: Message):
         user_id = message.from_user.id
         role = get_user_role(user_id)
         return role is Roles.EXPENSES
 
 
-class IsCookRole(BoundFilter):
-    async def check(self, message: types.Message):
+class IsCookRole:
+    async def check(self, message: Message):
         user_id = message.from_user.id
         role = get_user_role(user_id)
         return role is Roles.COOK
 
 
-class IsShipmentsRole(BoundFilter):
-    async def check(self, message: types.Message):
+class IsShipmentsRole(Filter):
+    async def __call__(self, message: Message):
         user_id = message.from_user.id
         role = get_user_role(user_id)
         return role is Roles.SHIPMENTS
 
 #
 # class Temp(Role):
-#     def handle_message(self, message: types.Message):
+#     def handle_message(self, message: Message):
 #         expenses_list = expenses.add_expenses(message.text)
 #         amount = sum([expense.amount for expense in expenses_list])
 #         answer_message = (

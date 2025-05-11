@@ -2,7 +2,6 @@
 import users
 from db_modules.db import DataBase
 from typing import List
-from aiogram.dispatcher.filters.state import StatesGroup, State
 
 from pkg import new_action_get_id, ActionType, get_now_date
 
