@@ -12,16 +12,81 @@ from domain.product import ProductVolume
 from handlers.roles import IsShipmentsRole
 from pkg import get_keyboard, ACCESS_IDS
 from middlewares import AccessMiddleware
+from typing import List
+
+from aiogram import types
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
+
+
+def get_initial_keyboard():
+    buttons = INITIAL_BUTTONS
+    return get_keyboard(buttons, True)
+
+
+INITIAL_BUTTONS = ["Ввести поставки от руки"]
+
+
+async def reply_state_announcement_message(event: types.Message, state: str):
+    state_dict = MetaStatesGroup.STATE_META[state]
+    message = state_dict.get("message")
+    keyboard = state_dict.get("keyboard")
+    if message:
+        if keyboard:
+            await event.answer(message, reply_markup=keyboard)
+        else:
+            await event.answer(message)
+
+
+class BarmenInitMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event: types.Message, data: dict):
+        result = await handler(event, data)
+
+        state = data.get("state")
+        current_state = await state.get_state()
+        await reply_state_announcement_message(event, current_state)
+
+        return result
+
 
 # Создаем роутер для обработчиков бармена
 barmen_router = Router()
 barmen_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
+barmen_router.message.middleware(BarmenInitMiddleware())
 
 
-class BarmenInitialStates(StatesGroup):
-    INITIAL_STATE = State()
-    WAITING_CHOOSE_INITIAL_ACTION = State()
-    SHIPMENT_INITIAL_STATE = State()
+class CustomState(State):
+    def __init__(self,
+                 initialization_response_message: str=None,
+                 initialization_response_keyboard: ReplyKeyboardMarkup=None):
+        self.message = initialization_response_message
+        self.keyboard = initialization_response_keyboard
+        super().__init__()
+
+
+class MetaStatesGroup(StatesGroup):
+    STATE_META: dict[str, dict] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        for name, value in cls.__dict__.items():
+            if isinstance(value, CustomState):
+                full_state_name = f"{cls.__name__}:{name}"
+                cls.STATE_META[full_state_name] = {
+                    "message": value.message,
+                    "keyboard": value.keyboard
+                }
+
+
+    @classmethod
+    def get_all_meta(cls):
+        return cls.subclasses_meta
+
+
+class BarmenInitialStates(MetaStatesGroup):
+    INITIAL_STATE = CustomState()
+    WAITING_CHOOSE_INITIAL_ACTION = CustomState("Выберите действие", get_initial_keyboard())
+    RECIEVE_SHIPMENT_BY_HAND = CustomState("Введите часть названия продукта:")
 
 
 # Применяем миддлварь проверки роли
@@ -55,16 +120,12 @@ STATES_BY_TEXT = {
 async def barmen_back(message: types.Message, state: FSMContext):
     await state.clear()
     await state.set_state(BarmenInitialStates.WAITING_CHOOSE_INITIAL_ACTION)
-    keyboard = get_initial_keyboard()
-    await message.answer("Выберите действие", reply_markup=keyboard)
 
 
 @barmen_router.message(StateFilter(BarmenInitialStates.INITIAL_STATE, None))
 async def barmen_back2(message: types.Message, state: FSMContext):
     await state.clear()
     await state.set_state(BarmenInitialStates.WAITING_CHOOSE_INITIAL_ACTION)
-    keyboard = get_initial_keyboard()
-    await message.answer("Выберите действие", reply_markup=keyboard)
 
 
 @barmen_router.message(BarmenInitialStates.WAITING_CHOOSE_INITIAL_ACTION)
