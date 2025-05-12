@@ -1,21 +1,20 @@
 import re
-from typing import List
 
 from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.types import KeyboardButton, ReplyKeyboardRemove
 
 import money
 import product_storage
 from domain.product import ProductVolume
-from handlers.barmen.initial_handlers import get_initial_keyboard
+from handlers.barmen.initial_handlers import get_initial_keyboard, _increments_string, _back_handler, PRODUCTS_RANGE, \
+    ReceivingStates, create_range_keyboard
 #import poster_storage
 #from poster_storage import PosterStorage, ProductVolume, Product
-from pkg import dp, get_most_similar_strings, get_keyboard, verify_message_is_value, ActionType, get_now_date_async
+from pkg import dp, get_keyboard, verify_message_is_value, ActionType, get_now_date_async
 from handlers.roles import IsShipmentsRole
 
-PRODUCTS_RANGE = 3
 MONEY_RECEPIENTS = ["Мириан", "Никита", "Другое"]
 OTHER_PURPOSES_FOR_MONEY_OUT = ["Зарплата", "Самостоятельная докупка продуктов", "Другие траты"]
 
@@ -29,12 +28,6 @@ class MoneyTransferStates(StatesGroup):
     WAITING_TO_GET_MONEY_OUT_PURPOSE = State()
     WAITING_FOR_COMMENTS_ON_PURPOSE = State()
     WAITING_FOR_MONEY_AMOUNT_OUT = State()
-
-
-class ReceivingStates(StatesGroup):
-    WAITING_SUPPLY_NAME = State()
-    WAITING_SUPPLY_QUANTITY = State()
-    WAITING_CATEGORY_NAME = State()
 
 
 # @dp.message_handler(IsShipmentsRole(), state=BarmenStates.INITIAL_STATE)
@@ -66,26 +59,6 @@ async def barmen_start_2(message: types.Message, state: FSMContext):
     await BarmenStates.INITIAL_STATE.set()
     keyboard = get_initial_keyboard()
     await message.answer("Выберите действие", reply_markup=keyboard)
-
-
-async def _increments_string(increments: List[ProductVolume]):
-    #ps = poster_storage.PosterStorage()
-    result = ""
-    for inc in increments:
-        pid = inc.product_id
-        diff = inc.quantity
-        product = product_storage.get_product_by_id(pid)
-        #product = await ps.product_by_id(pid)
-        result += f"{product.name}: {diff} {product.measurement_unit}\n"
-    return result
-
-
-def create_range_keyboard(products_range: str, names: List[str]) -> ReplyKeyboardMarkup:
-    keyboard = get_keyboard(names)
-    texts = ["Показать поставку", "Назад", "В начало"]
-    buttons = [KeyboardButton(text=text) for text in texts]
-    keyboard.add(*buttons)
-    return keyboard
 
 
 # Пополнение наличных
@@ -199,28 +172,6 @@ async def products_categories(message: types.Message, state: FSMContext):
     await message.answer("Выберите категорию", reply_markup=keyboard)
 
 
-async def _back_handler(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    categories_sequence = data.get("categories_sequence", [])
-    if len(categories_sequence) == 0:
-        await state.reset_state()
-        await BarmenStates.INITIAL_STATE.set()
-        await message.answer("Выберите действие", reply_markup=get_initial_keyboard())
-        return
-
-    await ReceivingStates.WAITING_CATEGORY_NAME.set()
-    categories_sequence = categories_sequence[:-1]
-    await state.update_data(categories_sequence=categories_sequence)
-    categories = product_storage.get_product_categories(categories_sequence)
-    if categories:
-        keyboard = create_range_keyboard(f"0-{PRODUCTS_RANGE}", categories)
-        # keyboard.add(KeyboardButton(text="Назад"))
-        await message.answer("Выберите", reply_markup=keyboard)
-    else:
-        await BarmenStates.INITIAL_STATE.set()
-        await message.answer("Выберите действие", reply_markup=get_initial_keyboard())
-
-
 @dp.message_handler(IsShipmentsRole(),
                     lambda message: message.text == "Назад",
                     state=ReceivingStates.WAITING_CATEGORY_NAME)
@@ -329,11 +280,5 @@ async def chose_quantity(message: types.Message, state: FSMContext):
     await message.answer(f"Для {product_name} добавил в поставку {quantity} {data['current_product'].measurement_unit}",
                          reply_markup=keyboard)
     await ReceivingStates.WAITING_CATEGORY_NAME.set()
-
-
-def get_products_names_most_similar(name, num: int):
-    products = product_storage.get_products()
-    names = [p.name for p in products]
-    return get_most_similar_strings(name, names)[:num]
 
 

@@ -1,17 +1,19 @@
 import re
 
 from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.filters import Command, StateFilter
 from aiogram.types import KeyboardButton
 
 import product_storage
-from handlers.barmen.handlers import get_products_names_most_similar, _back_handler, \
-    _increments_string
-from handlers.barmen.initial_handlers import get_initial_keyboard, BarmenStates
+from handlers.barmen.initial_handlers import get_initial_keyboard, _increments_string, _back_handler, BarmenInitialStates, barmen_router
 from handlers.roles import IsShipmentsRole
-from pkg import dp, get_keyboard, get_now_date_async, ActionType
+from pkg import dp, get_keyboard, get_now_date_async, ActionType, get_most_similar_strings
 from domain.product import ProductVolume
+from pkg import get_keyboard, ACCESS_IDS
+from middlewares import AccessMiddleware
+from aiogram import types, Router, F
 
 
 class ReceivingByHandStates(StatesGroup):
@@ -20,12 +22,11 @@ class ReceivingByHandStates(StatesGroup):
     WAITING_CATEGORY_NAME = State()
 
 
-@dp.message_handler(IsShipmentsRole(),
-                    lambda message: message.text == "Ввести поставки от руки",
-                    state="*")
+@barmen_router.message(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND)
 async def choose_product(message: types.Message, state: FSMContext):
+    print("here")
     await message.answer(f"Продукт:")
-    await ReceivingByHandStates.WAITING_SUPPLY_NAME.set()
+    await state.set_state(ReceivingByHandStates.WAITING_SUPPLY_NAME)
 
 
 async def _get_most_similar(message: types.Message, state: FSMContext):
@@ -34,19 +35,18 @@ async def _get_most_similar(message: types.Message, state: FSMContext):
     sub_name = message.text
     product = product_storage.get_product_by_name(sub_name)
     if product:
-        await ReceivingByHandStates.WAITING_SUPPLY_QUANTITY.set()
+        await state.set_state(ReceivingByHandStates.WAITING_SUPPLY_QUANTITY)
         await message.answer(f"Для {product.name} введите количество {product.measurement_unit}:")
         await state.update_data(current_product=product)
         return
 
     names = get_products_names_most_similar(sub_name, 5)
-    keyboard = get_keyboard(names)
-    keyboard.add(KeyboardButton(text="Назад"))
+    keyboard = get_keyboard(names+["Назад"])
     await message.answer(f"Выберите из предложенных или повторите попытку", reply_markup=keyboard)
 
 
-@dp.message_handler(IsShipmentsRole(),
-                    state=ReceivingByHandStates.WAITING_SUPPLY_QUANTITY)
+@barmen_router.message(IsShipmentsRole(),
+                       StateFilter(ReceivingByHandStates.WAITING_SUPPLY_QUANTITY))
 async def chose_quantity(message: types.Message, state: FSMContext):
     if re.fullmatch("Назад", message.text):
         return await _back_handler(message, state)
@@ -70,31 +70,27 @@ async def chose_quantity(message: types.Message, state: FSMContext):
     #product_storage.increment(name, quantity)
     keyboard = get_keyboard(["Показать поставку", "Ввести поставки от руки"])
     await message.answer(f"Для {product.name} добавил в поставку {quantity} {data['current_product'].measurement_unit}", reply_markup=keyboard)
-    await ReceivingByHandStates.WAITING_SUPPLY_NAME.set()
+    await state.set_state(ReceivingByHandStates.WAITING_SUPPLY_NAME)
 
 
-@dp.message_handler(IsShipmentsRole(), lambda message: message.text == "Показать поставку",
-                    state=ReceivingByHandStates.WAITING_SUPPLY_NAME)
+@barmen_router.message(IsShipmentsRole(), lambda message: message.text == "Показать поставку",
+                    StateFilter(ReceivingByHandStates.WAITING_SUPPLY_NAME))
 async def show_shipment(message: types.Message, state: FSMContext):
     #ps = poster_storage.PosterStorage()
     data = await state.get_data()
     product_increments = data.get("product_increments", [])
     if not product_increments:
         keyboard = get_keyboard(["Ввести поставки"])
-        # await ps.async_init()
-        # await ReceivingStates.WAITING_SUPPLY_NAME.set()
         await message.answer("Поставка пуста", reply_markup=keyboard)
     else:
         keyboard = get_keyboard(["Отправить поставку", "Ввести поставки от руки"])
         answer = await _increments_string(product_increments)
         await message.answer(answer, reply_markup=keyboard)
-    #await ps.async_init()
-    #await ReceivingStates.WAITING_SUPPLY_NAME.set()
 
 
-@dp.message_handler(IsShipmentsRole(),
-                    lambda message: message.text == "Отправить поставку",
-                    state=ReceivingByHandStates.WAITING_SUPPLY_NAME)
+@barmen_router.message(IsShipmentsRole(),
+                       lambda message: message.text == "Отправить поставку",
+                       StateFilter(ReceivingByHandStates.WAITING_SUPPLY_NAME))
 async def send_shipment(message: types.Message, state: FSMContext):
     #ps = poster_storage.PosterStorage()
     data = await state.get_data()
@@ -111,10 +107,16 @@ async def send_shipment(message: types.Message, state: FSMContext):
         #await ps.increment_products(product_increments)
         await state.update_data(product_increments=[])
         keyboard = get_initial_keyboard()
-        await BarmenStates.INITIAL_STATE.set()
+        await state.set_state(BarmenInitialStates.INITIAL_STATE)
         await message.answer("Поставка отправлена", reply_markup=keyboard)
 
 
-@dp.message_handler(IsShipmentsRole(), state=ReceivingByHandStates.WAITING_SUPPLY_NAME)
+@barmen_router.message(IsShipmentsRole(), StateFilter(ReceivingByHandStates.WAITING_SUPPLY_NAME))
 async def choose_product_(message: types.Message, state: FSMContext):
     return await _get_most_similar(message, state)
+
+
+def get_products_names_most_similar(name, num: int):
+    products = product_storage.get_products()
+    names = [p.name for p in products]
+    return get_most_similar_strings(name, names)[:num]
