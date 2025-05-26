@@ -18,6 +18,7 @@ from handlers.state_linked_list import StateLinkedList, StateNode
 
 
 class ReceivingByHandStates(MetaStatesGroup):
+    RECIEVE_SHIPMENT_BY_HAND = CustomState()
     WAITING_SUPPLY_NAME = CustomState()
     WAITING_SUPPLY_QUANTITY = CustomState()
     WAITING_CATEGORY_NAME = CustomState()
@@ -25,7 +26,7 @@ class ReceivingByHandStates(MetaStatesGroup):
     SHOW_SHIPMENT = CustomState()
 
 
-barmen_states = StateLinkedList([BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
+barmen_states = StateLinkedList([ReceivingByHandStates.RECIEVE_SHIPMENT_BY_HAND,
                                  ReceivingByHandStates.WAITING_SUPPLY_NAME,
                                  ReceivingByHandStates.WAITING_SUPPLY_QUANTITY,
                                  ReceivingByHandStates.WAITING_CATEGORY_NAME,
@@ -39,22 +40,6 @@ barmen_states = StateLinkedList([BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
 #     print("here")
 #     await message.answer(f"Продукт:")
 #     await state.set_state(ReceivingByHandStates.WAITING_SUPPLY_NAME)
-
-
-async def _get_most_similar(message: types.Message, state: FSMContext):
-    if message.text in []:
-        pass
-    sub_name = message.text
-    product = product_storage.get_product_by_name(sub_name)
-    if product:
-        await state.set_state(ReceivingByHandStates.WAITING_SUPPLY_QUANTITY)
-        await message.answer(f"Для {product.name} введите количество {product.measurement_unit}:")
-        await state.update_data(current_product=product)
-        return
-
-    names = get_products_names_most_similar(sub_name, 5)
-    keyboard = get_keyboard(names+["Назад"])
-    await message.answer(f"Выберите из предложенных или повторите попытку", reply_markup=keyboard)
 
 
 @barmen_router.message(IsShipmentsRole(),
@@ -123,7 +108,19 @@ async def send_shipment(message: types.Message, state: FSMContext):
 
 @barmen_router.message(IsShipmentsRole(), StateFilter(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND))
 async def choose_product(message: types.Message, state: FSMContext):
-    return await _get_most_similar(message, state)
+    if message.text in []:
+        pass
+    sub_name = message.text
+    product = product_storage.get_product_by_name(sub_name)
+    if product:
+        await state.set_state(ReceivingByHandStates.WAITING_SUPPLY_QUANTITY)
+        await message.answer(f"Для {product.name} введите количество {product.measurement_unit}:")
+        await state.update_data(current_product=product)
+        return
+
+    names = get_products_names_most_similar(sub_name, 5)
+    keyboard = get_keyboard(names + ["Назад"])
+    await message.answer(f"Выберите из предложенных или повторите попытку", reply_markup=keyboard)
 
 
 def get_products_names_most_similar(name, num: int):
