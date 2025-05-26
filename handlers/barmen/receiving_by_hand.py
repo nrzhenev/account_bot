@@ -14,6 +14,7 @@ from domain.product import ProductVolume
 from pkg import get_keyboard, ACCESS_IDS
 from middlewares import AccessMiddleware
 from aiogram import types, Router, F
+from handlers.state_linked_list import StateLinkedList, StateNode
 
 
 class ReceivingByHandStates(MetaStatesGroup):
@@ -22,6 +23,15 @@ class ReceivingByHandStates(MetaStatesGroup):
     WAITING_CATEGORY_NAME = CustomState()
     SHIPMENT_PRODUCT_ADDED = CustomState("Посмотреть поставку или добавить еще продукт?", get_keyboard(["Показать поставку", "Ввести поставки от руки"]))
     SHOW_SHIPMENT = CustomState()
+
+
+barmen_states = StateLinkedList([BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
+                                 ReceivingByHandStates.WAITING_SUPPLY_NAME,
+                                 ReceivingByHandStates.WAITING_SUPPLY_QUANTITY,
+                                 ReceivingByHandStates.WAITING_CATEGORY_NAME,
+                                 ReceivingByHandStates.SHIPMENT_PRODUCT_ADDED,
+                                 ReceivingByHandStates.SHOW_SHIPMENT])
+
 
 
 # @barmen_router.message(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND)
