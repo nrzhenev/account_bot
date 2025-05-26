@@ -1,21 +1,18 @@
 from typing import List
 
-from aiogram import types, Router, F
+from aiogram import Router
+from aiogram import types
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.filters import Command, StateFilter
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 import product_storage
 from domain.product import ProductVolume
-
+from handlers.fsm import FSM
 from handlers.roles import IsShipmentsRole
-from pkg import get_keyboard, ACCESS_IDS
 from middlewares import AccessMiddleware
-from typing import List
-
-from aiogram import types
-from aiogram.dispatcher.middlewares.base import BaseMiddleware
+from pkg import get_keyboard, ACCESS_IDS
 
 
 def get_initial_keyboard():
@@ -25,68 +22,52 @@ def get_initial_keyboard():
 
 INITIAL_BUTTONS = ["Ввести поставки от руки"]
 
+#
+# async def reply_state_announcement_message(event: types.Message, state: str):
+#     state_dict = MetaStatesGroup.STATE_META[state]
+#     message = state_dict.get("message")
+#     keyboard = state_dict.get("keyboard")
+#     if message:
+#         if keyboard:
+#             await event.answer(message, reply_markup=keyboard)
+#         else:
+#             await event.answer(message)
 
-async def reply_state_announcement_message(event: types.Message, state: str):
-    state_dict = MetaStatesGroup.STATE_META[state]
-    message = state_dict.get("message")
-    keyboard = state_dict.get("keyboard")
-    if message:
-        if keyboard:
-            await event.answer(message, reply_markup=keyboard)
-        else:
-            await event.answer(message)
 
-
-class BarmenInitMiddleware(BaseMiddleware):
-    async def __call__(self, handler, event: types.Message, data: dict):
-        result = await handler(event, data)
-
-        state = data.get("state")
-        current_state = await state.get_state()
-        await reply_state_announcement_message(event, current_state)
-
-        return result
+# class BarmenInitMiddleware(BaseMiddleware):
+#     async def __call__(self, handler, event: types.Message, data: dict):
+#         result = await handler(event, data)
+#
+#         state = data.get("state")
+#         current_state = await state.get_state()
+#         await reply_state_announcement_message(event, current_state)
+#
+#         return result
 
 
 # Создаем роутер для обработчиков бармена
 barmen_router = Router()
 barmen_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
-barmen_router.message.middleware(BarmenInitMiddleware())
+#barmen_router.message.middleware(BarmenInitMiddleware())
 
 
-class CustomState(State):
-    def __init__(self,
-                 initialization_response_message: str=None,
-                 initialization_response_keyboard: ReplyKeyboardMarkup=None):
-        self.message = initialization_response_message
-        self.keyboard = initialization_response_keyboard
-        super().__init__()
+class BarmenInitialStates(StatesGroup):
+    INITIAL_STATE = State()
+    WAITING_CHOOSE_INITIAL_ACTION = State()
+    RECIEVE_SHIPMENT_BY_HAND = State()
 
 
-class MetaStatesGroup(StatesGroup):
-    STATE_META: dict[str, dict] = {}
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-
-        for name, value in cls.__dict__.items():
-            if isinstance(value, CustomState):
-                full_state_name = f"{cls.__name__}:{name}"
-                cls.STATE_META[full_state_name] = {
-                    "message": value.message,
-                    "keyboard": value.keyboard
-                }
+barmen_fsm = FSM(BarmenInitialStates.INITIAL_STATE.state)
+barmen_fsm.add_transition(BarmenInitialStates.INITIAL_STATE.state,
+                          BarmenInitialStates.WAITING_CHOOSE_INITIAL_ACTION.state)
+barmen_fsm.add_transition(BarmenInitialStates.WAITING_CHOOSE_INITIAL_ACTION.state,
+                          BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND.state)
 
 
-    @classmethod
-    def get_all_meta(cls):
-        return cls.subclasses_meta
-
-
-class BarmenInitialStates(MetaStatesGroup):
-    INITIAL_STATE = CustomState()
-    WAITING_CHOOSE_INITIAL_ACTION = CustomState("Выберите действие", get_initial_keyboard())
-    RECIEVE_SHIPMENT_BY_HAND = CustomState("Введите часть названия продукта:")
+# barmen_states.add_state(StateNode(BarmenInitialStates.WAITING_CHOOSE_INITIAL_ACTION,
+#                                   set_state_message="Выберите действие"))
+# barmen_states.add_state(StateNode(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
+#                                   set_state_message="Введите часть названия продукта:"))
 
 
 # Применяем миддлварь проверки роли
