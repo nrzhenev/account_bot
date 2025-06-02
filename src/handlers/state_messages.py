@@ -22,22 +22,20 @@ class MessageHandler:
         self.states = {}
 
     def add_transition(self, from_state: StateWithData, to_state: StateWithData, key: Optional[str]=None):
-        self.add_state(from_state)
-        self.add_state(to_state)
+        self._add_state(from_state)
+        self._add_state(to_state)
         self.fsm.add_transition(from_state.state, to_state.state, key)
 
-    def add_state(self, state: StateWithData):
+    def _add_state(self, state: StateWithData):
         self.states[state.state] = state
 
-    def get_state(self, state_key: str) -> Optional[StateWithData]:
+    def _get_state(self, state_key: str) -> Optional[StateWithData]:
         return self.states.get(state_key)
 
     async def handle_state_transition(self, message, context: FSMContext):
         previous_state_key = self.fsm.state
         self.fsm.move(message.text)
         current_state_key = self.fsm.state
-        #if previous_state_key == current_state_key:
-        #    return
 
         current_state = self.get_state(current_state_key)
         if current_state is None:
