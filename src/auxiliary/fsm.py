@@ -2,21 +2,12 @@ from collections import defaultdict
 from typing import Optional
 import abc
 
-from aiogram.fsm.state import StatesGroup, State
-from transitions.core import MachineError
 from transitions.extensions import GraphMachine
 
 
 class StateTransitionInterface(abc.ABC):
     def trigger_transition(self, message, state):
         pass
-
-
-class StateWithData(State):
-    def __init__(self, message: Optional[str]=None, reply_markup: Optional[str]=None):
-        self.message = message
-        self.reply_markup = reply_markup
-        super().__init__()
 
 
 class FSM:

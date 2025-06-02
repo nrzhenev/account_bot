@@ -6,6 +6,7 @@ from aiogram.filters import StateFilter
 import product_storage
 from src.handlers.barmen.initial_handlers import get_initial_keyboard, _increments_string, _back_handler, BarmenInitialStates, barmen_router, MetaStatesGroup, CustomState
 from src.handlers.roles import IsShipmentsRole
+from src.handlers.state_messages import StateWithData
 from pkg import get_now_date_async, ActionType, get_most_similar_strings
 from domain.product import ProductVolume
 from pkg import get_keyboard

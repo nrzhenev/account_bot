@@ -1,8 +1,17 @@
 from typing import Optional
 
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State
 
-from src.auxiliary.fsm import FSM, StateWithData
+from src.auxiliary.fsm import FSM
+
+
+class StateWithData(State):
+    def __init__(self, message: Optional[str]=None, reply_markup: Optional[str]=None):
+        self.message = message
+        self.reply_markup = reply_markup
+        super().__init__()
+
 
 
 class MessageHandler:

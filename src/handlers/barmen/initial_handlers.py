@@ -10,8 +10,7 @@ from aiogram.types import ReplyKeyboardMarkup
 
 import product_storage
 from domain.product import ProductVolume
-from src.auxiliary.fsm import FSM, StateWithData
-from src.handlers.state_messages import MessageHandler
+from src.handlers.state_messages import MessageHandler, StateWithData
 from src.handlers.roles import IsShipmentsRole
 from middlewares import AccessMiddleware
 from pkg import get_keyboard, ACCESS_IDS
