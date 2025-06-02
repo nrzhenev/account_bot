@@ -37,7 +37,10 @@ class MessageHandler:
         self.fsm.move(message.text)
         current_state_key = self.fsm.state
 
-        current_state = self.get_state(current_state_key)
+        current_state = self._get_state(current_state_key)
+        if previous_state_key != current_state_key:
+           await context.set_state(current_state)
+
         if current_state is None:
             raise ValueError("Нет нужного state")
 
