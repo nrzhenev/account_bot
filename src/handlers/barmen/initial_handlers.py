@@ -30,8 +30,8 @@ barmen_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
 
 
 class BarmenInitialStates(StatesGroup):
-    INITIAL_STATE = StateWithData("Выберите действие:")
-    WAITING_CHOOSE_ACTION = StateWithData("Тест1", get_keyboard(["Показать поставку"]))
+    INITIAL_STATE = StateWithData()
+    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(["Ввести поставки"]))
     RECIEVE_SHIPMENT_BY_HAND = StateWithData("Введите часть названия продукта:")
 BIS = BarmenInitialStates
 
@@ -40,34 +40,28 @@ barmen_mh = MessageHandler(BIS.INITIAL_STATE)
 barmen_mh.add_transition(BarmenInitialStates.INITIAL_STATE, BarmenInitialStates.WAITING_CHOOSE_ACTION)
 barmen_mh.add_transition(BarmenInitialStates.WAITING_CHOOSE_ACTION,
                          BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
-                          "Показать поставку")
+                          "Ввести поставки")
 
 # Применяем миддлварь проверки роли
 barmen_router.message.filter(IsShipmentsRole())
 
 
-STATES_BY_TEXT = {
-    INITIAL_BUTTONS[-1]: BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND
-}
-
-
-def decorator(func):
+def barmen_event(func):
     async def inside_function(message, state):
-        await barmen_mh.handle_state_transition(message, state)
         await func(message, state)
+        await barmen_mh.handle_state_transition(message, state)
 
     return inside_function
 
 
-
 @barmen_router.message(StateFilter(BarmenInitialStates.INITIAL_STATE, None))
-@decorator
+@barmen_event
 async def start(message: types.Message, state: FSMContext):
-    await asyncio.sleep(0.1)
+    return 
 
 
 @barmen_router.message(StateFilter(BarmenInitialStates.WAITING_CHOOSE_ACTION))
-@decorator
+@barmen_event
 async def choose_actions(message: types.Message, state: FSMContext):
     return
 
