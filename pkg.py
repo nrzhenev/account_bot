@@ -160,9 +160,8 @@ def get_most_similar_strings(string: str, list_of_strings: List[str]):
     return sorted(list_of_strings, key=lambda string2: calc_dist(string, string2))
 
 
-def get_keyboard(buttons: List[str], one_time: bool=False):
-    if buttons and isinstance(buttons[0], str):
-        buttons = [[btn] for btn in buttons]
+def get_keyboard(buttons: List[str], one_time: bool=True, row_length=3):
+    buttons = [buttons[i: i+row_length] for i in range(0, len(buttons), row_length)]
 
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
