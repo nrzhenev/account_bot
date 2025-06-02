@@ -5,7 +5,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-from handlers.admin import AdminStates, get_initial_message
+from src.handlers.admin import AdminStates, get_initial_message
 from pkg import dp, get_keyboard, get_dates_from_string, log_function_name
 
 

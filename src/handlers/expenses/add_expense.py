@@ -2,9 +2,9 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-from handlers.expenses.initial_handlers import ExpensesInitialStates, INITIAL_POSSIBILITIES, \
+from src.handlers.expenses.initial_handlers import ExpensesInitialStates, INITIAL_POSSIBILITIES, \
     keyboard_with_return_button, process_quantity
-from handlers.roles import IsExpensesRole
+from src.handlers.roles import IsExpensesRole
 from pkg import dp
 
 MODULE_NAME = "add_expense"

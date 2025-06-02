@@ -1,8 +1,14 @@
 from collections import defaultdict
 from typing import Optional
+import abc
 
 from transitions.core import MachineError
 from transitions.extensions import GraphMachine
+
+
+class StateTransitionInterface(abc.ABC):
+    def trigger_transition(self, message, state):
+        pass
 
 
 class FSM:

@@ -7,7 +7,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import KeyboardButton
 
-from handlers.roles import IsExpensesRole
+from src.handlers.roles import IsExpensesRole
 # import poster_storage
 # from poster_storage import PosterStorage, ProductVolume, Product
 from pkg import dp

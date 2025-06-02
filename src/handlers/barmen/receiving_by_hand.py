@@ -1,20 +1,15 @@
 import re
 
-from aiogram import types
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.filters import Command, StateFilter
-from aiogram.types import KeyboardButton
+from aiogram.filters import StateFilter
 
 import product_storage
-from handlers.barmen.initial_handlers import get_initial_keyboard, _increments_string, _back_handler, BarmenInitialStates, barmen_router, MetaStatesGroup, CustomState
-from handlers.roles import IsShipmentsRole
-from pkg import dp, get_keyboard, get_now_date_async, ActionType, get_most_similar_strings
+from src.handlers.barmen.initial_handlers import get_initial_keyboard, _increments_string, _back_handler, BarmenInitialStates, barmen_router, MetaStatesGroup, CustomState
+from src.handlers.roles import IsShipmentsRole
+from pkg import get_now_date_async, ActionType, get_most_similar_strings
 from domain.product import ProductVolume
-from pkg import get_keyboard, ACCESS_IDS
-from middlewares import AccessMiddleware
-from aiogram import types, Router, F
-from handlers.state_linked_list import StateLinkedList, StateNode
+from pkg import get_keyboard
+from aiogram import types
 
 
 class ReceivingByHandStates(MetaStatesGroup):
@@ -24,15 +19,6 @@ class ReceivingByHandStates(MetaStatesGroup):
     WAITING_CATEGORY_NAME = CustomState()
     SHIPMENT_PRODUCT_ADDED = CustomState("Посмотреть поставку или добавить еще продукт?", get_keyboard(["Показать поставку", "Ввести поставки от руки"]))
     SHOW_SHIPMENT = CustomState()
-
-
-barmen_states = StateLinkedList([ReceivingByHandStates.RECIEVE_SHIPMENT_BY_HAND,
-                                 ReceivingByHandStates.WAITING_SUPPLY_NAME,
-                                 ReceivingByHandStates.WAITING_SUPPLY_QUANTITY,
-                                 ReceivingByHandStates.WAITING_CATEGORY_NAME,
-                                 ReceivingByHandStates.SHIPMENT_PRODUCT_ADDED,
-                                 ReceivingByHandStates.SHOW_SHIPMENT])
-
 
 
 # @barmen_router.message(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND)

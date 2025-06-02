@@ -5,7 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 import money
-from handlers.admin import AdminStates, get_initial_keyboard
+from src.handlers.admin import AdminStates, get_initial_keyboard
 from pkg import dp, get_keyboard, verify_message_is_value, MONEY_VALUE_REGEX_STRING
 
 

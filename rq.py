@@ -1,14 +1,10 @@
-from datetime import datetime
 from typing import List
 
 import aiohttp
 import asyncio
-import requests
-import json
 from datetime import datetime
 
 from credentials import POSTER_TOKEN
-from auxiliary.system_functions import pd, pl
 from poster_storage import PosterStorage, ProductIncrement
 
 

@@ -2,8 +2,8 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-from handlers.admin import AdminStates
-from handlers.roles import IsAdmin
+from src.handlers.admin import AdminStates
+from src.handlers.roles import IsAdmin
 from pkg import dp, get_most_similar_strings
 from users import get_users
 from actions import get_actions_between_dates, actions_string

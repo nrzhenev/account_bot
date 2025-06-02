@@ -8,12 +8,12 @@ from aiogram.types import KeyboardButton, ReplyKeyboardRemove
 import money
 import product_storage
 from domain.product import ProductVolume
-from handlers.barmen.initial_handlers import get_initial_keyboard, _increments_string, _back_handler, PRODUCTS_RANGE, \
+from src.handlers.barmen.initial_handlers import get_initial_keyboard, _increments_string, _back_handler, PRODUCTS_RANGE, \
     ReceivingStates, create_range_keyboard
 #import poster_storage
 #from poster_storage import PosterStorage, ProductVolume, Product
 from pkg import dp, get_keyboard, verify_message_is_value, ActionType, get_now_date_async
-from handlers.roles import IsShipmentsRole
+from src.handlers.roles import IsShipmentsRole
 
 MONEY_RECEPIENTS = ["Мириан", "Никита", "Другое"]
 OTHER_PURPOSES_FOR_MONEY_OUT = ["Зарплата", "Самостоятельная докупка продуктов", "Другие траты"]

@@ -1,16 +1,11 @@
-import datetime
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-import domain.product
-import product_storage
 import users
-from auxiliary.system_functions import TEXT_PARSERS
-from handlers.admin import AdminStates, get_initial_keyboard, get_initial_message
-from handlers.roles import IsAdmin
-from pkg import dp, get_keyboard, get_now_date, log_function_name
-from users import get_user_by_id
+from src.handlers.admin import AdminStates, get_initial_message
+from src.handlers.roles import IsAdmin
+from pkg import dp, get_keyboard
 
 
 @dp.message_handler(IsAdmin(),

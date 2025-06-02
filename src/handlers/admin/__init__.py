@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-from handlers.roles import IsAdmin
+from src.handlers.roles import IsAdmin
 from pkg import get_keyboard, dp
 
 

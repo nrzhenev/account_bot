@@ -1,12 +1,10 @@
-import re
-
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 import product_storage
-from handlers.admin import AdminStates
-from handlers.admin.storage_history import SetPriceStates
-from handlers.roles import IsAdmin
+from src.handlers.admin import AdminStates
+from src.handlers.admin.storage_history import SetPriceStates
+from src.handlers.roles import IsAdmin
 from pkg import dp, get_keyboard, get_most_similar_strings
 
 

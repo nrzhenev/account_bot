@@ -1,21 +1,14 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
-from typing import NamedTuple, Optional, List, Dict
+from typing import NamedTuple, Optional, Dict
 
-from aiogram import types
 import regex as re
 
 from datetime import datetime
 from typing import List
 
 import aiohttp
-import asyncio
-import requests
-import json
 
 from credentials import POSTER_TOKEN
-from auxiliary.system_functions import pd, pl
-
-from db_modules.db import DataBase
 
 
 async def read(command: str):

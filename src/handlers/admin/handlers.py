@@ -11,16 +11,11 @@ import categories as categories_module
 import expenses
 import money
 import product_storage
-from handlers.admin import AdminStates, get_initial_keyboard
+from src.handlers.admin import AdminStates, get_initial_keyboard
 
 
 def init_handlers():
-    from handlers.admin.get_balance_history import get_actions_between_dates
-    from handlers.admin.money_receive import verify_message_is_value
-    from handlers.admin.money_transfer import transfer_money
-    from handlers.admin.set_date_interval import choose_action
-    from handlers.admin.set_price import set_price
-    from handlers.admin.storage_history import storage_history_add_restriction
+    pass
 
 
 init_handlers()
@@ -29,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 # import poster_storage as ps
-from handlers.roles import IsAdmin
+from src.handlers.roles import IsAdmin
 from pkg import (dp, get_keyboard, get_now_date, log_function_name)
 
 
