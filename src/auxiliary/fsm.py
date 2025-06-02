@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Optional
 import abc
 
+from aiogram.fsm.state import StatesGroup, State
 from transitions.core import MachineError
 from transitions.extensions import GraphMachine
 
@@ -9,6 +10,13 @@ from transitions.extensions import GraphMachine
 class StateTransitionInterface(abc.ABC):
     def trigger_transition(self, message, state):
         pass
+
+
+class StateWithData(State):
+    def __init__(self, message: Optional[str]=None, reply_markup: Optional[str]=None):
+        self.message = message
+        self.reply_markup = reply_markup
+        super().__init__()
 
 
 class FSM:
@@ -56,11 +64,14 @@ class FSM:
         try:
             self._machine.trigger(transition_key)
             print("moved to", self.state)
-        except MachineError as e:
+        #except MachineError as e:
+        except Exception as e:
             print(f"There is no such key {transition_key}; Staying the same")
 
     @property
-    def state(self):
+    def state(self) -> str:
+        if not self._machine:
+            return self._initial_state_key
         return self._machine.state
 
     def back(self):

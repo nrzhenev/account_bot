@@ -5,13 +5,13 @@ from aiogram import Router
 from aiogram import types
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
+from aiogram.fsm.state import StatesGroup
 from aiogram.types import ReplyKeyboardMarkup
 
 import product_storage
 from domain.product import ProductVolume
-from src.auxiliary.fsm import FSM
-from src.handlers.state_messages import StateMessagesHandler
+from src.auxiliary.fsm import FSM, StateWithData
+from src.handlers.state_messages import MessageHandler
 from src.handlers.roles import IsShipmentsRole
 from middlewares import AccessMiddleware
 from pkg import get_keyboard, ACCESS_IDS
@@ -31,23 +31,17 @@ barmen_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
 
 
 class BarmenInitialStates(StatesGroup):
-    INITIAL_STATE = State()
-    WAITING_CHOOSE_ACTION = State()
-    RECIEVE_SHIPMENT_BY_HAND = State()
+    INITIAL_STATE = StateWithData("Выберите действие:")
+    WAITING_CHOOSE_ACTION = StateWithData("Тест1", get_keyboard(["Показать поставку"]))
+    RECIEVE_SHIPMENT_BY_HAND = StateWithData("Введите часть названия продукта:")
+BIS = BarmenInitialStates
 
 
-barmen_mh = StateMessagesHandler()
-barmen_fsm = FSM(BarmenInitialStates.INITIAL_STATE.state)
-
-barmen_fsm.add_transition(BarmenInitialStates.INITIAL_STATE.state,
-                          BarmenInitialStates.WAITING_CHOOSE_ACTION.state)
-barmen_mh.add_state_message(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND.state, "Выберите действие:")
-
-
-barmen_fsm.add_transition(BarmenInitialStates.WAITING_CHOOSE_ACTION.state,
-                          BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND.state,
+barmen_mh = MessageHandler(BIS.INITIAL_STATE)
+barmen_mh.add_transition(BarmenInitialStates.INITIAL_STATE, BarmenInitialStates.WAITING_CHOOSE_ACTION)
+barmen_mh.add_transition(BarmenInitialStates.WAITING_CHOOSE_ACTION,
+                         BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
                           "Показать поставку")
-barmen_mh.add_state_message(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND.state, "Введите часть названия продукта:")
 
 # Применяем миддлварь проверки роли
 barmen_router.message.filter(IsShipmentsRole())
@@ -58,16 +52,10 @@ STATES_BY_TEXT = {
 }
 
 
-
 def decorator(func):
     async def inside_function(message, state):
-        fsm_transition_key = message.text
-        barmen_fsm.move(fsm_transition_key)
-        await state.set_state(barmen_fsm.state)
-
+        await barmen_mh.handle_state_transition(message, state)
         await func(message, state)
-
-        await barmen_mh.handle_set_state(message, state)
 
     return inside_function
 
@@ -103,12 +91,6 @@ async def _back_handler(message: types.Message, state: FSMContext):
 
 
 PRODUCTS_RANGE = 3
-
-
-class ReceivingStates(StatesGroup):
-    WAITING_SUPPLY_NAME = State()
-    WAITING_SUPPLY_QUANTITY = State()
-    WAITING_CATEGORY_NAME = State()
 
 
 def create_range_keyboard(names: List[str]) -> ReplyKeyboardMarkup:

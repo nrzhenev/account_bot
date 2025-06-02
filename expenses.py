@@ -7,7 +7,7 @@ import money
 import users
 from db_modules.db import DataBase
 from pkg import get_now_date, get_dates_from_string, ActionType, new_action_get_id
-from src.auxiliary import TEXT_PARSERS
+from src.auxiliary.system_functions import TEXT_PARSERS
 
 db = DataBase()
 

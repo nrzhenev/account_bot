@@ -6,8 +6,8 @@ from db_modules.db import DataBase
 # from handlers.expenses import initial_handlers
 # from handlers.priority_handlers import chr
 # from handlers.admin.handlers import UserStates
-#from handlers.barmen.initial_handlers import barmen_router
-from handlers.barmen.test import barmen_router
+from src.handlers.barmen.initial_handlers import barmen_router
+#from handlers.barmen.test import barmen_router
 # import poster_storage
 from pkg import dp, bot
 
