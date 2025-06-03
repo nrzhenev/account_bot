@@ -48,7 +48,10 @@ barmen_router.message.filter(IsShipmentsRole())
 
 def barmen_event(func):
     async def inside_function(message, state):
-        await func(message, state)
+        result  = await func(message, state)
+        if result == -1:
+            return
+
         await barmen_mh.handle_state_transition(message, state)
 
     return inside_function

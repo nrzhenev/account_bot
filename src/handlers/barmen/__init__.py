@@ -1,2 +1,1 @@
 from src.handlers.barmen.initial_handlers import get_initial_keyboard
-#from handlers.barmen.receiving_by_hand import choose_product
