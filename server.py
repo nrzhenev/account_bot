@@ -7,6 +7,7 @@ from db_modules.db import DataBase
 # from handlers.priority_handlers import chr
 # from handlers.admin.handlers import UserStates
 from src.handlers.barmen.receiving_by_hand import barmen_router
+from src.handlers.expenses.initial_handlers import expenses_router
 #from handlers.barmen.test import barmen_router
 # import poster_storage
 from pkg import dp, bot
@@ -16,6 +17,7 @@ from pkg import dp, bot
 
 db = DataBase()
 dp.include_router(barmen_router)
+dp.include_router(expenses_router)
 
 
 expenses_ = '⚙️ Вносить траты'

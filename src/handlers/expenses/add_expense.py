@@ -1,61 +1,62 @@
-from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import StatesGroup, State
+import re
 
-from src.handlers.expenses.initial_handlers import ExpensesInitialStates, INITIAL_POSSIBILITIES, \
-    keyboard_with_return_button, process_quantity
-from src.handlers.roles import IsExpensesRole
-from pkg import dp
+from aiogram import types
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup
+
+from src.handlers.expenses.initial_handlers import ExpensesInitialStates, keyboard_with_return_button, expenses_event, \
+    expenses_mh, expenses_router
+from src.handlers.state_messages import StateWithData
 
 MODULE_NAME = "add_expense"
 
 
+EXPENSES_CATEGORIES = ["Панда закупки бармену",
+                       "Мириан Личное",
+                       "Такси/Бензин",
+                       "Банк",
+                       "Аренда",
+                       "Коммунальные услуги",
+                       "Другое"]
+
+
 class ExpensesStates(StatesGroup):
-    WAITING_CATEGORY_NAME = State()
-    WAITING_OTHER_CATEGORY_NAME = State()
-    WAITING_EXPENSE_QUANTITY = State()
+    CHOOSING_PAYMENT_TYPE = StateWithData("Как было оплачено",
+                                          keyboard_with_return_button(["Картой", "Наличными"]))
+    CHOOSING_CATEGORY= StateWithData("Выберите категорию", keyboard_with_return_button(EXPENSES_CATEGORIES))
+    CHOOSING_QUANTITY = StateWithData("Введите число (сколько потрачено)")
+    WAITING_CATEGORY_NAME = StateWithData()
+    WAITING_OTHER_CATEGORY_NAME = StateWithData()
 
 
-EXPENSES_CATEGORIES = ["Мириан Личное", "Такси/Бензин", "Аренда", "Коммунальные услуги", "Другое"]
+expenses_mh.add_transition(ExpensesInitialStates.WAITING_CHOOSE_ACTION, ExpensesStates.CHOOSING_PAYMENT_TYPE, "Ввести траты")
+expenses_mh.add_transition(ExpensesStates.CHOOSING_PAYMENT_TYPE, ExpensesStates.CHOOSING_CATEGORY)
+expenses_mh.add_transition(ExpensesStates.CHOOSING_CATEGORY, ExpensesStates.CHOOSING_QUANTITY)
 
 
-@dp.message_handler(IsExpensesRole(),
-                    lambda message: message.text == INITIAL_POSSIBILITIES[MODULE_NAME],
-                    state=ExpensesInitialStates.INITIAL_STATE)
-async def category_request(message: types.Message, state: FSMContext):
-    """Предложить пользователю выбрать из списка категорий"""
-
-    await ExpensesStates.WAITING_CATEGORY_NAME.set()
-    keyboard = keyboard_with_return_button(EXPENSES_CATEGORIES)
-    await message.answer("Выберите категорию", reply_markup=keyboard)
+@expenses_router.message(ExpensesStates.CHOOSING_PAYMENT_TYPE)
+@expenses_event
+async def choosing_payment_type(message: types.Message, state: FSMContext):
+    payment_type = message.text
+    await state.update_data({"payment_type": payment_type})
 
 
-@dp.message_handler(IsExpensesRole(),
-                    lambda message: message.text == EXPENSES_CATEGORIES[-1],
-                    state=ExpensesStates.WAITING_CATEGORY_NAME)
-async def handle_category_other(message: types.Message, state: FSMContext):
-    await ExpensesStates.WAITING_OTHER_CATEGORY_NAME.set()
-    keyboard = keyboard_with_return_button([])
-    await message.answer("На что потрачено", reply_markup=keyboard)
+@expenses_router.message(ExpensesStates.CHOOSING_CATEGORY)
+@expenses_event
+async def choosing_category(message: types.Message, state: FSMContext):
+    category = message.text
+    await state.update_data({"category": category})
 
 
-@dp.message_handler(IsExpensesRole(),
-                    lambda message: message.text != EXPENSES_CATEGORIES[-1],
-                    state=[ExpensesStates.WAITING_CATEGORY_NAME, ExpensesStates.WAITING_OTHER_CATEGORY_NAME])
-async def process_category_name(message: types.Message, state: FSMContext):
-    await state.update_data(expense_category=message.text)
-    await ExpensesStates.WAITING_EXPENSE_QUANTITY.set()
-    await message.answer(f"Введите, сколько потрачено, в формате  331.12 или 232")
+@expenses_router.message(ExpensesStates.CHOOSING_QUANTITY)
+@expenses_event
+async def define_quantity(message: types.Message, state: FSMContext):
+    quantity = re.match(r'^[+-]?\d+(\.\d+)?$', message.text)
+    if not quantity:
+        await message.answer("Введите число в формате 331.12 или 232")
+        return -1
 
-
-@dp.message_handler(IsExpensesRole(),
-                    state=ExpensesStates.WAITING_EXPENSE_QUANTITY)
-async def process_expense_quantity(message: types.Message, state: FSMContext):
-    quantity = await process_quantity(message)
-    if quantity is None:
-        return
-
+    quantity = float(quantity.group())
     data = await state.get_data()
-    category = data["expense_category"]
-    await message.answer(f"Добавлено {quantity} лари в {category}")
-    await ExpensesInitialStates.INITIAL_STATE.set()
+    await state.update_data({"quantity": quantity})
+    await message.answer(f"Добавлена трата <b>{quantity}</b> лари через <b>{data.get('payment_type')}</b> на <b>{data.get('category')}</b>", parse_mode="HTML")

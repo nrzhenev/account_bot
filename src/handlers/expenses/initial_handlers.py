@@ -26,10 +26,11 @@ expenses_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS)
 
 class ExpensesInitialStates(StatesGroup):
     INITIAL_STATE = StateWithData()
-    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(INITIAL_POSSIBILITIES.values()))
+    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(list(INITIAL_POSSIBILITIES.values())))
 EIS = ExpensesInitialStates
 
 expenses_mh = MessageHandler(EIS.INITIAL_STATE)
+expenses_mh.add_transition(EIS.INITIAL_STATE, EIS.WAITING_CHOOSE_ACTION)
 
 
 def expenses_event(func):
@@ -43,34 +44,25 @@ def expenses_event(func):
     return inside_function
 
 
-def get_keyboard(texts: List[str]):
-    keyboard = aiogram.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    buttons = [KeyboardButton(text=text) for text in texts]
-    keyboard.add(*buttons)
-    return keyboard
-
-
 def get_initial_keyboard():
     buttons = list(INITIAL_POSSIBILITIES.values())
     return get_keyboard(buttons)
 
 
-@expenses_router.message(IsExpensesRole(), StateFilter(None, EIS.INITIAL_STATE))
+@expenses_router.message(StateFilter(None, EIS.INITIAL_STATE))
 @expenses_event
 async def expenses_start(message: types.Message, state: FSMContext):
     return
 
 
-@expenses_router.message(IsExpensesRole(), StateFilter(EIS.WAITING_CHOOSE_ACTION))
+@expenses_router.message(StateFilter(EIS.WAITING_CHOOSE_ACTION))
 @expenses_event
 async def choose_actions(message: types.Message, state: FSMContext):
     return
 
 
 def keyboard_with_return_button(names: list):
-    keyboard = aiogram.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    buttons = [KeyboardButton(text=text) for text in names + [RETURN_BUTTON]]
-    return keyboard.add(*buttons)
+    return get_keyboard(names + [RETURN_BUTTON])
 
 
 async def process_quantity(message: types.Message):
