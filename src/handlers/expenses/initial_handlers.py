@@ -2,27 +2,45 @@ import re
 from typing import List
 
 import aiogram
+from aiogram import Router
 from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.filters import StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup
 from aiogram.types import KeyboardButton
 
+from middlewares import AccessMiddleware
+from pkg import ACCESS_IDS
+from pkg import get_keyboard
 from src.handlers.roles import IsExpensesRole
-# import poster_storage
-# from poster_storage import PosterStorage, ProductVolume, Product
-from pkg import dp
-
+from src.handlers.state_messages import MessageHandler, StateWithData
 
 RETURN_BUTTON = "В начало"
-INITIAL_POSSIBILITIES = {"add_expense": "Ввести непродуктовые траты",
+INITIAL_POSSIBILITIES = {"add_expense": "Ввести траты",
                          "increase_debt": "Вернуть/Взять Долг"}
 
 
-__all__ = ['expenses_start_1', 'expenses_start_2']
+expenses_router = Router()
+expenses_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
 
 
 class ExpensesInitialStates(StatesGroup):
-    INITIAL_STATE = State()
+    INITIAL_STATE = StateWithData()
+    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(INITIAL_POSSIBILITIES.values()))
+EIS = ExpensesInitialStates
+
+expenses_mh = MessageHandler(EIS.INITIAL_STATE)
+
+
+def expenses_event(func):
+    async def inside_function(message, state):
+        result  = await func(message, state)
+        if result == -1:
+            return
+
+        await expenses_mh.handle_state_transition(message, state)
+
+    return inside_function
 
 
 def get_keyboard(texts: List[str]):
@@ -37,30 +55,16 @@ def get_initial_keyboard():
     return get_keyboard(buttons)
 
 
-@dp.message_handler(IsExpensesRole(), state=None)
-async def expenses_start_1(message: types.Message, state: FSMContext):
-    await state.reset_state()
-    await ExpensesInitialStates.INITIAL_STATE.set()
-    keyboard = get_initial_keyboard()
-    await message.answer("Выберите действие", reply_markup=keyboard)
+@expenses_router.message(IsExpensesRole(), StateFilter(None, EIS.INITIAL_STATE))
+@expenses_event
+async def expenses_start(message: types.Message, state: FSMContext):
+    return
 
 
-@dp.message_handler(IsExpensesRole(), commands=["start"], state="*")
-async def expenses_start_2(message: types.Message, state: FSMContext):
-    await state.reset_state()
-    await ExpensesInitialStates.INITIAL_STATE.set()
-    keyboard = get_initial_keyboard()
-    await message.answer("Выберите действие", reply_markup=keyboard)
-
-
-@dp.message_handler(IsExpensesRole(),
-                    lambda message: message.text == RETURN_BUTTON,
-                    state="*")
-async def expenses_start_return(message: types.Message, state: FSMContext):
-    await state.reset_state()
-    await ExpensesInitialStates.INITIAL_STATE.set()
-    keyboard = get_initial_keyboard()
-    await message.answer("Выберите действие", reply_markup=keyboard)
+@expenses_router.message(IsExpensesRole(), StateFilter(EIS.WAITING_CHOOSE_ACTION))
+@expenses_event
+async def choose_actions(message: types.Message, state: FSMContext):
+    return
 
 
 def keyboard_with_return_button(names: list):
