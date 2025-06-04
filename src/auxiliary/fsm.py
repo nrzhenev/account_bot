@@ -49,7 +49,7 @@ class FSM:
         if self._machine is None:
             self._re_init()
 
-        if transition_key is None or self._default_transition_key in self._state_key_dict.get(self.state):
+        if transition_key is None or self._default_transition_key in self._state_key_dict.get(self.state, {}):
             transition_key = self._default_transition_key
 
         try:
