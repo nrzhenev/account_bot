@@ -82,13 +82,22 @@ class DataBase:
         self._pre_initialize_products()
 
     def _pre_initialize_products(self):
-        df = pd.read_excel('data/preinitialization.xlsx')
-        df = df[["name", "measurement_unit"]]
+        df = pd.read_excel('data/preinitialization.xlsx', sheet_name="poster_ingredients")
+        df = df[["name", "unit", "poster_id", "category", "price"]]
+        df["type"] = "ingredient"
 
         conn = sqlite3.connect('db/finance.db')
 
         # Шаг 3: Запись данных в таблицу SQLite
         df.to_sql('products', conn, if_exists='append', index=False)
+
+        # df = pd.read_excel('data/preinitialization.xlsx', sheet_name="poster_products")
+        # df = df[["name", "measurement_unit", "poster_id"]]
+        #
+        # conn = sqlite3.connect('db/finance.db')
+        #
+        # # Шаг 3: Запись данных в таблицу SQLite
+        # df.to_sql('products', conn, if_exists='append', index=False)
 
     def check_db_exists(self):
         """Проверяет, инициализирована ли БД, если нет — инициализирует"""

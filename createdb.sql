@@ -20,32 +20,14 @@ create table if not exists debts(
 );
 
 
-create table if not exists categories(
-    category varchar(80),
-    type varchar(40),
-    UNIQUE (category, type));
-
-
-create table if not exists category_links(
-    target varchar(40),
-    category varchar(80),
-    --UNIQUE (target, category),
-    FOREIGN KEY(category) REFERENCES categories(category)
-);
-
-
---create table product_aliases(
---    product_name varchar(80),
---    alias varchar(120),
---    UNIQUE (product_name, alias),
---    FOREIGN KEY(product_name) REFERENCES categories(product_name)
---);
-
-
 create table if not exists products(
     id integer primary key,
+    poster_id integer,
     name varchar(80),
-    measurement_unit varchar(3)
+    type varchar(80),
+    price float,
+    category varchar(80),
+    unit varchar(3)
 );
 
 
@@ -53,7 +35,6 @@ create table if not exists product_price(
     product_id integer,
     price float
 );
-
 
 
 create table if not exists messages(
@@ -103,7 +84,7 @@ VALUES
 
 INSERT INTO users
 VALUES
-(358058423, 2, "Никита"),
+(358058423, 1, "Никита"),
 (1268471021, 1, "Мириан"),
 (368555562, 2, "Юля"),
 (5852542325, 2, "Коля"),
