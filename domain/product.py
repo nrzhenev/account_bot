@@ -21,12 +21,25 @@ class ProductWithPrice:
         return np.median(np.ndarray(self.prices))
 
 
-class PosterIngredient(NamedTuple):
-    poster_id: int
-    name: str
-    category: str
-    unit: str
-    price: float
+class PosterIngredient:
+    def __init__(self,
+                 id: int,
+                 poster_id: int,
+                 name: str,
+                 category: str,
+                 unit: str,
+                 price: float):
+        self.id = int(id)
+        self.poster_id = int(poster_id)
+        self.name = name
+        self.category= category
+        self._unit = unit
+        self.price = float(price) if price else 0
+
+    @property
+    def unit(self):
+        UNIT_TRANSLATION = {"p": "штук", "kg": "кг", "g": "грамм", "l": "литров"}
+        return UNIT_TRANSLATION.get(self._unit, self._unit)
 
 
 class ProductVolume(NamedTuple):

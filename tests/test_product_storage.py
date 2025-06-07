@@ -55,7 +55,7 @@ class TestGetProduct:
         # Добавляем тестовый продукт
         product_name = "test prodiuct"
         measurement_unit = "шт"
-        temporary_db.insert("products", {"name": product_name, "measurement_unit": measurement_unit})
+        temporary_db.insert("products", {"name": product_name, "unit": measurement_unit, "category": "temp", "price": 2, "poster_id": 1})
 
         # Получаем продукт
         pr = ProductRepository(temporary_db)
@@ -63,7 +63,7 @@ class TestGetProduct:
 
         assert product is not None, "Продукт не найден"
         assert product.name == product_name, f"Имя продукта '{product.name}' не соответствует ожидаемому '{product_name}'"
-        assert product.measurement_unit == measurement_unit, f"Единица измерения '{product.measurement_unit}' не соответствует ожидаемой '{measurement_unit}'"
+        assert product.unit == measurement_unit, f"Единица измерения '{product.unit}' не соответствует ожидаемой '{measurement_unit}'"
 
     def test_get_product_by_name_not_found(self, temporary_db):
         """Тест случая, когда продукт не найден"""
@@ -107,14 +107,14 @@ class TestGetProduct:
             ("продукт 3", "л")
         ]
         for name, unit in products:
-            temporary_db.insert("products", {"name": name, "measurement_unit": unit})
+            temporary_db.insert("products", {"name": name, "unit": unit, "category": "temp", "price": 2, "poster_id": 1})
 
         # Получаем список продуктов
         result = pr.get_all()
 
         assert len(result) == len(products), "Количество полученных продуктов не соответствует ожидаемому"
         for product in result:
-            assert any(p[0] == product.name and p[1] == product.measurement_unit for p in products), f"Продукт {product.name} не найден в тестовых данных"
+            assert any(p[0] == product.name and p[1] == product.unit for p in products), f"Продукт {product.name} не найден в тестовых данных"
 
     def test_get_products_empty(self, temporary_db):
         """Тест получения списка продуктов из пустой базы"""

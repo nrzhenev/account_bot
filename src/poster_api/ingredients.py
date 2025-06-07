@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 import requests
 from typing import List, NamedTuple
@@ -25,7 +25,7 @@ url = "https://joinposter.com/api/storage.createSupply"
 
 class Supply(NamedTuple):
     id: int
-    num: int
+    num: float
     unit_price: float
 
 

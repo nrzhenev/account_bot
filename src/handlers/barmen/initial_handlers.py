@@ -16,12 +16,13 @@ from middlewares import AccessMiddleware
 from pkg import get_keyboard, ACCESS_IDS
 
 
+INITIAL_BUTTONS = ["Ввести поставки от руки"]
+
+
 def get_initial_keyboard():
     buttons = INITIAL_BUTTONS
     return get_keyboard(buttons, True)
 
-
-INITIAL_BUTTONS = ["Ввести поставки от руки"]
 
 
 # Создаем роутер для обработчиков бармена
@@ -77,7 +78,7 @@ async def _increments_string(increments: List[ProductVolume]):
         diff = inc.quantity
         product = product_storage.get_product_by_id(pid)
         #product = await ps.product_by_id(pid)
-        result += f"{product.name}: {diff} {product.measurement_unit}\n"
+        result += f"{product.name}: {diff} {product.unit}\n"
     return result
 
 

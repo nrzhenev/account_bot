@@ -115,35 +115,31 @@ class ProductRepository(ProductRepositoryInterface):
 
     def get_by_id(self, product_id: int) -> Optional[PosterIngredient]:
         cursor = self.db.cursor
-        cursor.execute("select"
-                       "p.poster_id, p.name, p.category, p.unit, p.price from products p where p.id = (?)",
+        cursor.execute("select p.id, p.poster_id, p.name, p.category, p.unit, p.price from products p where p.id = (?)",
                        (product_id,))
         result = cursor.fetchone()
         if not result:
             return
         return PosterIngredient(*result)
 
-    def get_by_name(self, name: str) -> Optional[ProductWithPrice]:
+    def get_by_name(self, name: str) -> Optional[PosterIngredient]:
         cursor = self.db.cursor
         cursor.execute(
-            "select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from products p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
+            "select p.id, p.poster_id, p.name, p.category, p.unit, p.price from products p where p.name = (?)"            ,
             (name,))
         result = cursor.fetchone()
-        id, name, measurement_unit, prices_string = result
-        if not (id and name):
-            return
-        prices = prices_string.split(",")
-        return ProductWithPrice(*result[:-1], prices)
+        return PosterIngredient(*result)
 
-    def get_all(self) -> List[ProductWithPrice]:
+    def get_all(self) -> List[PosterIngredient]:
         cursor = self.db.cursor
         cursor.execute(
-            "select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') from products p LEFT JOIN product_price pp ON p.id = pp.product_id GROUP BY p.id")
+            "select p.id, p.poster_id, p.name, p.category, p.unit, p.price from products as p"
+        )
         rows = cursor.fetchall()
         if not rows:
             return []
 
-        return [ProductWithPrice(*row[:3], [float(price) for price in row[3].split(",")]) for row in rows]
+        return [PosterIngredient(*row) for row in rows]
 
     def add_product(self, name: str, measurement_unit: str):
         product_name = name.lower()
