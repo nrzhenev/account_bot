@@ -21,6 +21,14 @@ class ProductWithPrice:
         return np.median(np.ndarray(self.prices))
 
 
+class PosterIngredient(NamedTuple):
+    poster_id: int
+    name: str
+    category: str
+    unit: str
+    price: float
+
+
 class ProductVolume(NamedTuple):
     product_id: int
     quantity: float

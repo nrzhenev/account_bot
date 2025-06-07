@@ -2,7 +2,7 @@
 import datetime
 from typing import Optional, List
 
-from db_modules.db import DataBase, ProductRepository, ProductChangesRepository
+from db_modules.db import DataBase, ProductRepository, ProductChangesRepository, IngredientsRepository
 from domain.product import ProductWithPrice, ProductVolume
 from pkg import ActionType
 
@@ -31,6 +31,11 @@ def get_products(data_base=db) -> List[ProductWithPrice]:
 def get_product_by_id(product_id: int, data_base=db) -> Optional[ProductWithPrice]:
     product_repository = ProductRepository(data_base)
     return product_repository.get_by_id(product_id)
+
+
+def get_ingredient_by_id(ingredient_id: int, data_base=db):
+    product_repository = IngredientsRepository(data_base)
+    return product_repository.get_by_id(ingredient_id)
 
 
 def increment_products(increments: List[ProductVolume],

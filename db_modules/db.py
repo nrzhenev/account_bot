@@ -6,7 +6,7 @@ from collections import defaultdict
 import pandas as pd
 
 from db_modules.interface import ProductRepositoryInterface, ProductChangesRepositoryInterface, DebtsRepositoryInterface
-from domain.product import ProductWithPrice
+from domain.product import ProductWithPrice, Product, PosterIngredient
 from domain.money_actor import MoneyActor
 
 
@@ -113,15 +113,15 @@ class ProductRepository(ProductRepositoryInterface):
     def __init__(self, data_base):
         self.db = data_base
 
-    def get_by_id(self, id: int) -> Optional[ProductWithPrice]:
+    def get_by_id(self, product_id: int) -> Optional[PosterIngredient]:
         cursor = self.db.cursor
-        cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.id = (?)",
-                       (id,))
+        cursor.execute("select"
+                       "p.poster_id, p.name, p.category, p.unit, p.price from products p where p.id = (?)",
+                       (product_id,))
         result = cursor.fetchone()
         if not result:
             return
-        prices_string = result[-1]
-        return ProductWithPrice(*result, prices_string)
+        return PosterIngredient(*result)
 
     def get_by_name(self, name: str) -> Optional[ProductWithPrice]:
         cursor = self.db.cursor
@@ -149,6 +149,48 @@ class ProductRepository(ProductRepositoryInterface):
         product_name = name.lower()
         self.db.insert("products",
                          {"name": product_name, "measurement_unit": measurement_unit})
+
+
+class IngredientsRepository(ProductRepositoryInterface):
+    def __init__(self, data_base):
+        self.db = data_base
+
+    def get_by_id(self, id: int) -> Optional[Product]:
+        cursor = self.db.cursor
+        cursor.execute("select p.id, p.name, p.measurement_unit from ingredients p where p.id = (?)",
+                       (id,))
+        result = cursor.fetchone()
+        if not result:
+            return
+        return Product(*result)
+
+    def get_by_name(self, name: str) -> Optional[ProductWithPrice]:
+        cursor = self.db.cursor
+        cursor.execute(
+            "select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') as prices from ingredients p LEFT JOIN product_price pp on p.id = pp.product_id where p.name = (?)",
+            (name,))
+        result = cursor.fetchone()
+        id, name, measurement_unit, prices_string = result
+        if not (id and name):
+            return
+        prices = prices_string.split(",")
+        return ProductWithPrice(*result[:-1], prices)
+
+    def get_all(self) -> List[ProductWithPrice]:
+        cursor = self.db.cursor
+        cursor.execute(
+            "select p.id, p.name, p.measurement_unit, IFNULL(GROUP_CONCAT(pp.price), '0') from products p LEFT JOIN product_price pp ON p.id = pp.product_id GROUP BY p.id")
+        rows = cursor.fetchall()
+        if not rows:
+            return []
+
+        return [ProductWithPrice(*row[:3], [float(price) for price in row[3].split(",")]) for row in rows]
+
+    def add_product(self, name: str, measurement_unit: str):
+        product_name = name.lower()
+        self.db.insert("products",
+                         {"name": product_name, "measurement_unit": measurement_unit})
+
 
 
 class ProductChangesRepository(ProductChangesRepositoryInterface):
@@ -204,6 +246,24 @@ class DebtsRepository(DebtsRepositoryInterface):
     def set(self, name: str, amount: float):
         self.db.insert("debts",
                        {"company_name": name, "amount": amount})
+
+
+def PosterRepository(data_base):
+    def __init__(self):
+        self.db = data_base
+
+    def get_ingredients(self):
+        cursor = self.db.cursor
+        cursor.execute("select p.id, p.name, p.measurement_unit from products p where p.id = (?)",
+                       (id,))
+        result = cursor.fetchone()
+        if not result:
+            return
+        prices_string = result[-1]
+        return ProductWithPrice(*result, prices_string)
+
+
+
 
 
 #check_db_exists()
