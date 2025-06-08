@@ -17,6 +17,7 @@ from pkg import get_keyboard, ACCESS_IDS
 
 
 INITIAL_BUTTONS = ["Ввести поставки от руки"]
+BACK_BUTTON = "Назад"
 
 
 def get_initial_keyboard():
@@ -49,9 +50,10 @@ barmen_router.message.filter(IsShipmentsRole())
 
 def barmen_event(func):
     async def inside_function(message, state):
-        result  = await func(message, state)
-        if result == -1:
-            return
+        if message.text != BACK_BUTTON:
+            result  = await func(message, state)
+            if result == -1:
+                return
 
         await barmen_mh.handle_state_transition(message, state)
 

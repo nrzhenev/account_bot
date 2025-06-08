@@ -22,12 +22,12 @@ class FSM:
 
     def add_transition(self, from_state: str, to_state: str, transition_key: Optional[str]=None):
         if transition_key is None:
-            if self._state_key_dict.get(from_state):
-                raise ValueError("Cannot use keyless transition for state with actual keys added")
+            #if self._state_key_dict.get(from_state):
+            #    raise ValueError("Cannot use keyless transition for state with actual keys added")
             transition_key = self._default_transition_key
-        else:
-            if self._default_transition_key in self._state_key_dict.get(from_state, []):
-                raise ValueError("Cannot set transition key for state without transition key")
+        #else:
+            #if self._default_transition_key in self._state_key_dict.get(from_state, []):
+            #    raise ValueError("Cannot set transition key for state without transition key")
         self._state_key_dict[from_state].append(transition_key)
         self._states.add(from_state)
         self._states.add(to_state)
@@ -49,8 +49,15 @@ class FSM:
         if self._machine is None:
             self._re_init()
 
-        if transition_key is None or self._default_transition_key in self._state_key_dict.get(self.state, {}):
-            transition_key = self._default_transition_key
+        if transition_key not in self._state_key_dict.get(self.state, {}):
+            if self._default_transition_key not in self._state_key_dict.get(self.state, {}):
+                print(f"There is no such key {transition_key} and no keyless transition; Staying the same")
+                return
+            else:
+                transition_key = self._default_transition_key
+
+        #if transition_key is None or self._default_transition_key in self._state_key_dict.get(self.state, {}):
+        #    transition_key = self._default_transition_key
 
         try:
             self._machine.trigger(transition_key)
