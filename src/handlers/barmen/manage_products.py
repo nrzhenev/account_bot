@@ -60,7 +60,17 @@ async def show_products(message: types.Message, state: FSMContext):
 @barmen_router.message(ManageProductsStates.PRODUCTS_DECISION)
 @barmen_event
 async def products_decision(message: types.Message, state: FSMContext):
-    pass
+    data = await state.get_data()
+    current_products = data.get("current_managing_products")
+    if not current_products:
+        return
+
+    if message.text == TURN_OFF:
+        turn_off_products([product.poster_id for product in current_products])
+        await message.answer(f"Отключили указанные продукты")
+    elif message.text == TURN_ON:
+        turn_on_products([product.poster_id for product in current_products])
+        await message.answer(f"Включили указанные продукты")
 
 
 def get_products_names_most_similar(name, num: Optional[int]=None):

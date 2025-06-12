@@ -23,17 +23,22 @@ def _poster_request_with_json(method, addition):
     return json.loads(response.text)
 
 
-def dish_ids_containing_ingredient(ingredient_id):
+def preparations_ids_containing_ingredient(ingredient_id):
     preparations = _poster_request("menu.getPrepacks")
 
     def has_id(preparation):
         return any(str(i["ingredient_id"]) == str(ingredient_id) for i in preparation["ingredients"])
 
-    return [dish["product_id"] for dish in filter(lambda p: has_id(p), preparations)]
+    filtered_preparations_ids = set([p["product_id"] for p in filter(lambda p: has_id(p), preparations)])
+    result = set()
+    result = result.union(filtered_preparations_ids)
+    for target_preparation_id in filtered_preparations_ids:
+        result = result.union(preparations_ids_containing_ingredient(target_preparation_id))
+    return result
 
 
 def products_containing_ingredient(ingredient_id: int):
-    possible_ingredients_ids = [ingredient_id] + dish_ids_containing_ingredient(ingredient_id)
+    possible_ingredients_ids = [ingredient_id] + list(preparations_ids_containing_ingredient(ingredient_id))
     possible_ingredients_ids_str = set([str(ing) for ing in possible_ingredients_ids])
     products = _poster_request(f"menu.getProducts")
 
@@ -49,4 +54,10 @@ def products_containing_ingredient(ingredient_id: int):
 def turn_off_products(target_product_ids: List[str]):
     for product_id in target_product_ids:
         addition = {"dish_id": product_id, "visible": {"1": 0}}
+        _poster_request_with_json("menu.updateDish", addition)
+
+
+def turn_on_products(target_product_ids: List[str]):
+    for product_id in target_product_ids:
+        addition = {"dish_id": product_id, "visible": {"1": 1}}
         _poster_request_with_json("menu.updateDish", addition)
