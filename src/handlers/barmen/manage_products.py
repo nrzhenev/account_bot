@@ -10,7 +10,7 @@ from src.handlers.barmen.initial_handlers import (BarmenInitialStates,
                                                   barmen_router, barmen_mh, barmen_event, BACK_BUTTON, RETURN_BUTTON)
 from domain.product import PosterProduct
 from src.handlers.state_messages import StateWithData
-from src.poster_api.poster_managing import products_containing_ingredient
+from src.poster_api.poster_managing import products_containing_ingredient, turn_on_products, turn_off_products
 
 
 class ManageProductsStates(StatesGroup):
@@ -18,8 +18,16 @@ class ManageProductsStates(StatesGroup):
     PRODUCTS_DECISION = StateWithData("выберите действие", get_keyboard(["Отключить", "Включить", BACK_BUTTON, RETURN_BUTTON]))
 
 
+TURN_OFF = "Отключить"
+TURN_ON = "Включить"
+
+
 barmen_mh.add_transition(BarmenInitialStates.MANAGE_PRODUCTS, ManageProductsStates.WAITING_SUPPLY_NAME)
 barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, ManageProductsStates.PRODUCTS_DECISION)
+barmen_mh.add_transition(ManageProductsStates.PRODUCTS_DECISION, BarmenInitialStates.WAITING_CHOOSE_ACTION)
+#barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, ManageProductsStates.PRODUCTS_DECISION, TURN_OFF)
+#barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, ManageProductsStates.PRODUCTS_DECISION, TURN_ON)
+
 barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, BarmenInitialStates.MANAGE_PRODUCTS, BACK_BUTTON)
 barmen_mh.add_transition(ManageProductsStates.PRODUCTS_DECISION, BarmenInitialStates.MANAGE_PRODUCTS, BACK_BUTTON)
 

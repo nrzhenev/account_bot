@@ -1,2 +1,2 @@
-from src.handlers.barmen.initial_handlers import get_initial_keyboard
+from src.handlers.barmen.initial_handlers import get_keyboard
 from src.handlers.barmen.manage_products import get_products_names_most_similar
