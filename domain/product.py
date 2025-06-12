@@ -42,6 +42,12 @@ class PosterIngredient:
         return UNIT_TRANSLATION.get(self._unit, self._unit)
 
 
+class PosterProduct(NamedTuple):
+    poster_id: int
+    name: str
+    category: str
+
+
 class ProductVolume(NamedTuple):
     product_id: int
     quantity: float

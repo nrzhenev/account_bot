@@ -37,12 +37,22 @@ async def suggest_products_for_turn_of(message: types.Message, state: FSMContext
 @barmen_event
 async def show_products(message: types.Message, state: FSMContext):
     ingredient = product_storage.get_product_by_name(message.text)
-    await state.update_data({"current_turn_off_ingredient": ingredient})
     target_products = products_containing_ingredient(ingredient.poster_id)
-    names = [p["product_name"] for p in target_products]
+    products = []
+    for tp in target_products:
+        products.append(PosterProduct(int(tp["product_id"]), tp["product_name"], tp["category_name"]))
+    names = [p.name for p in products]
+    await state.update_data({"current_managing_products": products})
+
     names_string = '\n'.join(names)
-    text = f"Отключить приведенные продукты?\n\n{names_string}"
+    text = f"Для приведенных продуктов\n\n{names_string}"
     await message.answer(text)
+
+
+@barmen_router.message(ManageProductsStates.PRODUCTS_DECISION)
+@barmen_event
+async def products_decision(message: types.Message, state: FSMContext):
+    pass
 
 
 def get_products_names_most_similar(name, num: Optional[int]=None):
