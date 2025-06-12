@@ -7,29 +7,30 @@ from aiogram.fsm.state import StatesGroup
 import product_storage
 from pkg import get_most_similar_strings, get_keyboard
 from src.handlers.barmen.initial_handlers import (BarmenInitialStates,
-                                                  barmen_router, barmen_mh, barmen_event, BACK_BUTTON)
+                                                  barmen_router, barmen_mh, barmen_event, BACK_BUTTON, RETURN_BUTTON)
+from domain.product import PosterProduct
 from src.handlers.state_messages import StateWithData
 from src.poster_api.poster_managing import products_containing_ingredient
 
 
 class ManageProductsStates(StatesGroup):
     WAITING_SUPPLY_NAME = StateWithData()
-    WAITING_SUPPLY_QUANTITY = StateWithData("Или можете нажать назад", get_keyboard([BACK_BUTTON]))
-    WAITING_CATEGORY_NAME = StateWithData()
-    SHIPMENT_PRODUCT_ADDED = StateWithData("Показать поставку или добавить еще продукт?",
-                                           get_keyboard(["Показать поставку", "Добавить еще"]))
-    READY_TO_SEND = StateWithData("Отправить или добавить еще?")
-    SEND_SHIPMENT = StateWithData()
+    PRODUCTS_DECISION = StateWithData("выберите действие", get_keyboard(["Отключить", "Включить", BACK_BUTTON, RETURN_BUTTON]))
+
 
 barmen_mh.add_transition(BarmenInitialStates.MANAGE_PRODUCTS, ManageProductsStates.WAITING_SUPPLY_NAME)
+barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, ManageProductsStates.PRODUCTS_DECISION)
+barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, BarmenInitialStates.MANAGE_PRODUCTS, BACK_BUTTON)
+barmen_mh.add_transition(ManageProductsStates.PRODUCTS_DECISION, BarmenInitialStates.MANAGE_PRODUCTS, BACK_BUTTON)
 
-barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND, BACK_BUTTON)
+barmen_mh.add_transition(ManageProductsStates.WAITING_SUPPLY_NAME, BarmenInitialStates.WAITING_CHOOSE_ACTION, RETURN_BUTTON)
+barmen_mh.add_transition(ManageProductsStates.PRODUCTS_DECISION, BarmenInitialStates.WAITING_CHOOSE_ACTION, RETURN_BUTTON)
 
 @barmen_router.message(BarmenInitialStates.MANAGE_PRODUCTS)
 @barmen_event
 async def suggest_products_for_turn_of(message: types.Message, state: FSMContext):
     await message.answer("Выберите",
-                         reply_markup=get_keyboard([BACK_BUTTON] + get_products_names_most_similar(message.text)))
+                         reply_markup=get_keyboard([BACK_BUTTON, RETURN_BUTTON] + get_products_names_most_similar(message.text)))
 
 
 @barmen_router.message(ManageProductsStates.WAITING_SUPPLY_NAME)
