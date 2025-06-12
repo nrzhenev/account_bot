@@ -33,8 +33,9 @@ barmen_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
 
 class BarmenInitialStates(StatesGroup):
     INITIAL_STATE = StateWithData()
-    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(["Ввести поставки"]))
+    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(["Ввести поставки", "Отключить ингридиент"]))
     RECIEVE_SHIPMENT_BY_HAND = StateWithData("Введите часть названия продукта:")
+    MANAGE_PRODUCTS = StateWithData("Введите часть названия ингридиента, который хотите отключить:")
 BIS = BarmenInitialStates
 
 
@@ -43,6 +44,9 @@ barmen_mh.add_transition(BarmenInitialStates.INITIAL_STATE, BarmenInitialStates.
 barmen_mh.add_transition(BarmenInitialStates.WAITING_CHOOSE_ACTION,
                          BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
                           "Ввести поставки")
+barmen_mh.add_transition(BarmenInitialStates.WAITING_CHOOSE_ACTION,
+                         BarmenInitialStates.MANAGE_PRODUCTS,
+                          "Отключить ингридиент")
 
 # Применяем миддлварь проверки роли
 barmen_router.message.filter(IsShipmentsRole())
