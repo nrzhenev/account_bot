@@ -122,7 +122,7 @@ async def send_shipment(message: types.Message, state: FSMContext):
         await message.answer("Поставка пустая")
     else:
         #date = await get_now_date_async(state)
-        #send_shipment_to_poster(product_increments)
+        send_shipment_to_poster(product_increments)
         await state.update_data(product_increments=[])
         await message.answer("Поставка отправлена")
 #

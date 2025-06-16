@@ -8,6 +8,7 @@ from db_modules.db import DataBase
 # from handlers.admin.handlers import UserStates
 #from src.handlers.barmen.receiving_by_hand import barmen_router
 from src.handlers.barmen.manage_products import barmen_router
+from src.handlers.barmen.receiving_by_hand import barmen_router
 from src.handlers.expenses.initial_handlers import expenses_router
 #from handlers.barmen.test import barmen_router
 # import poster_storage
