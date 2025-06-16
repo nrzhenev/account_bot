@@ -10,7 +10,7 @@ import product_storage
 from domain.product import ProductVolume
 from pkg import get_most_similar_strings, get_keyboard
 from src.handlers.barmen.initial_handlers import (_increments_string, BarmenInitialStates,
-                                                  barmen_router, barmen_mh, barmen_event, BACK_BUTTON)
+                                                  barmen_router, barmen_mh, barmen_event, BACK_BUTTON, RETURN_BUTTON)
 from src.handlers.roles import IsShipmentsRole
 from src.handlers.state_messages import StateWithData
 from src.poster_api.ingredients import send_shipment as shipment_to_poster, Supply
@@ -46,7 +46,7 @@ barmen_mh.add_transition(ReceivingByHandStates.SEND_SHIPMENT, BarmenInitialState
 @barmen_event
 async def suggest_products(message: types.Message, state: FSMContext):
     await message.answer("Выберите",
-                         reply_markup=get_keyboard([BACK_BUTTON] + get_products_names_most_similar(message.text)))
+                         reply_markup=get_keyboard([BACK_BUTTON, RETURN_BUTTON] + get_products_names_most_similar(message.text)))
 
 
 @barmen_router.message(ReceivingByHandStates.WAITING_SUPPLY_NAME)
