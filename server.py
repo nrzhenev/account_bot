@@ -2,13 +2,15 @@
 import asyncio
 import logging
 
+import os
+
 from db_modules.db import DataBase
 # from handlers.expenses import initial_handlers
 # from handlers.priority_handlers import chr
 # from handlers.admin.handlers import UserStates
-#from src.handlers.barmen.receiving_by_hand import barmen_router
-from src.handlers.barmen.manage_products import barmen_router
 from src.handlers.barmen.receiving_by_hand import barmen_router
+from src.handlers.barmen.manage_products import barmen_router
+from src.handlers.barmen.write_off_products import barmen_router
 from src.handlers.expenses.initial_handlers import expenses_router
 #from handlers.barmen.test import barmen_router
 # import poster_storage
@@ -109,5 +111,5 @@ if __name__ == '__main__':
     #asyncio.run(ps.async_init())
     #pre_initialize()
     asyncio.run(main())
-    #os.remove("/home/rzhenev/personal/account_bot/db/finance.db")
+    os.remove("/home/nikita/git/account_bot/db/finance.db")
     print(1)
