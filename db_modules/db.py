@@ -128,6 +128,8 @@ class ProductRepository(ProductRepositoryInterface):
             "select p.id, p.poster_id, p.name, p.category, p.unit, p.price from products p where p.name = (?)"            ,
             (name,))
         result = cursor.fetchone()
+        if not result:
+            return
         return PosterIngredient(*result)
 
     def get_all(self) -> List[PosterIngredient]:

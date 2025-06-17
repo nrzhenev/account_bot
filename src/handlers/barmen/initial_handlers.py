@@ -54,7 +54,7 @@ barmen_router.message.filter(IsShipmentsRole())
 
 
 def barmen_event(func):
-    async def inside_function(message, state):
+    async def inside_function(message, state: FSMContext):
         if message.text not in [BACK_BUTTON, RETURN_BUTTON]:
             result  = await func(message, state)
             if result == -1:
