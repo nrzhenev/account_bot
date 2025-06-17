@@ -58,7 +58,7 @@ def barmen_event(func):
         if message.text not in [BACK_BUTTON, RETURN_BUTTON]:
             result  = await func(message, state)
             if result == -1:
-                return
+                return await barmen_mh.handle_state_transition_stay_same(message, state)
 
         await barmen_mh.handle_state_transition(message, state)
 

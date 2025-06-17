@@ -32,6 +32,17 @@ class MessageHandler:
     def _get_state(self, state_key: str) -> Optional[StateWithData]:
         return self.states.get(state_key)
 
+    async def handle_state_transition_stay_same(self, message, context: FSMContext):
+        current_state_key = self.fsm.state
+        current_state = self._get_state(current_state_key)
+
+        if current_state.message and current_state.reply_markup:
+            return await message.answer(current_state.message, reply_markup=current_state.reply_markup)
+        elif current_state.message:
+            return await message.answer(current_state.message)
+        else:
+            return
+
     async def handle_state_transition(self, message, context: FSMContext):
         previous_state_key = self.fsm.state
         self.fsm.move(message.text)
