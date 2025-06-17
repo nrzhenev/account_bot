@@ -31,7 +31,7 @@ barmen_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS))
 class BarmenInitialStates(StatesGroup):
     INITIAL_STATE = StateWithData()
     WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", INITIAL_KEYBOARD)
-    RECIEVE_SHIPMENT_BY_HAND = StateWithData("Введите часть названия продукта:")
+    RECIEVE_SHIPMENT_BY_HAND = StateWithData("Введите часть названия продукта:", get_keyboard(["Показать поставку", RETURN_BUTTON]))
     WRITE_OFF_PRODUCTS = StateWithData("Введите часть названия продукта:")
     MANAGE_PRODUCTS = StateWithData("Введите часть названия ингридиента, который хотите отключить:")
 BIS = BarmenInitialStates
@@ -39,9 +39,14 @@ BIS = BarmenInitialStates
 
 barmen_mh = MessageHandler(BIS.INITIAL_STATE)
 barmen_mh.add_transition(BarmenInitialStates.INITIAL_STATE, BarmenInitialStates.WAITING_CHOOSE_ACTION)
+
 barmen_mh.add_transition(BarmenInitialStates.WAITING_CHOOSE_ACTION,
                          BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
                           SHIPMENT_BUTTON)
+barmen_mh.add_transition(BarmenInitialStates.RECIEVE_SHIPMENT_BY_HAND,
+                         BarmenInitialStates.WAITING_CHOOSE_ACTION,
+                         RETURN_BUTTON)
+
 barmen_mh.add_transition(BarmenInitialStates.WAITING_CHOOSE_ACTION,
                          BarmenInitialStates.WRITE_OFF_PRODUCTS,
                           WRITE_OFF_PRODUCTS_BUTTON)
