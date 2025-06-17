@@ -66,7 +66,8 @@ async def choose_products(message: types.Message, state: FSMContext):
 async def _product_increment(product, quantity):
     if product.name == "Лосось целый":
         product = product_storage.get_product_by_name("Лосось филе")
-    return ProductVolume(product.id, quantity*0.7)
+        return ProductVolume(product.id, quantity*0.7)
+    return ProductVolume(product.id, quantity)
 
 
 @barmen_router.message(IsShipmentsRole(),
