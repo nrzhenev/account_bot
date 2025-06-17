@@ -57,6 +57,12 @@ async def choose_products(message: types.Message, state: FSMContext):
     await message.answer(f"Для {product.name} введите количество {product.unit}")
 
 
+async def _product_increment(product, quantity):
+    if product.name == "Лосось целый":
+        product = product_storage.get_product_by_name("Лосось филе")
+    return ProductVolume(product.id, quantity*0.7)
+
+
 @barmen_router.message(IsShipmentsRole(),
                        StateFilter(ReceivingByHandStates.WAITING_SUPPLY_QUANTITY))
 @barmen_event
@@ -65,12 +71,12 @@ async def chose_quantity(message: types.Message, state: FSMContext):
     if not quantity:
         await message.answer("Введите число в формате 331.12 или 232")
         return -1
+    quantity = float(message.text)
 
     data = await state.get_data()
     product_increments = data.get("product_increments", [])
-    quantity = float(message.text)
     product = data['current_product']
-    pi = ProductVolume(product.id, quantity)
+    pi = await _product_increment(product, quantity)
     product_increments.append(pi)
     await state.update_data(product_increments=product_increments)
     await message.answer(f"Для {product.name} добавил в поставку {quantity} {data['current_product'].unit}")
@@ -81,7 +87,6 @@ async def chose_quantity(message: types.Message, state: FSMContext):
 async def shipment_product_added(message: types.Message, state: FSMContext):
     if message.text == "Показать поставку":
         await show_shipment(message, state)
-
 
 
 async def show_shipment(message: types.Message, state: FSMContext):
