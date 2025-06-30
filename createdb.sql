@@ -27,7 +27,8 @@ create table if not exists products(
     type varchar(80),
     price float,
     category varchar(80),
-    unit varchar(3)
+    unit varchar(3),
+    daily_consumption float
 );
 
 
