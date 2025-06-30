@@ -16,6 +16,7 @@ from src.handlers.roles import IsExpensesRole
 from src.handlers.state_messages import MessageHandler, StateWithData
 
 RETURN_BUTTON = "В начало"
+BACK_BUTTON = "Назад"
 INITIAL_POSSIBILITIES = {"add_expense": "Ввести траты",
                          "increase_debt": "Вернуть/Взять Долг"}
 
@@ -26,7 +27,7 @@ expenses_router.message.middleware(AccessMiddleware(allowed_user_ids=ACCESS_IDS)
 
 class ExpensesInitialStates(StatesGroup):
     INITIAL_STATE = StateWithData()
-    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(list(INITIAL_POSSIBILITIES.values())))
+    WAITING_CHOOSE_ACTION = StateWithData("Выберите действие:", get_keyboard(["Ввести траты", "Вернуть долг", "Взять в долг"]))
 EIS = ExpensesInitialStates
 
 expenses_mh = MessageHandler(EIS.INITIAL_STATE)
