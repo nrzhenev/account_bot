@@ -12,15 +12,18 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+import os
+from dotenv import load_dotenv
 
 
 import re
 from functools import wraps
 
 from db_modules.db import DataBase
-from credentials import TOKEN
 
 
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
 API_TOKEN = TOKEN
 
 bot = Bot(token=API_TOKEN)

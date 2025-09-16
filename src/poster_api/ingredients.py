@@ -1,10 +1,15 @@
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
 import requests
 from typing import List, NamedTuple
 
-from credentials import POS
 from src.poster_api.pkg import pos_request
+
+
+load_dotenv()
+POS = os.getenv("POS")
 
 
 def get_ingridients():

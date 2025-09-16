@@ -3,6 +3,7 @@ import asyncio
 import logging
 
 import os
+from dotenv import load_dotenv
 
 from db_modules.db import DataBase
 # from handlers.expenses import initial_handlers
@@ -19,6 +20,7 @@ from pkg import dp, bot
 #from handlers.cook.handlers import show_shipment
 
 
+load_dotenv()
 db = DataBase()
 dp.include_router(barmen_router)
 dp.include_router(expenses_router)
@@ -111,5 +113,5 @@ if __name__ == '__main__':
     #asyncio.run(ps.async_init())
     #pre_initialize()
     asyncio.run(main())
-    os.remove("/home/nikita/git/account_bot/db/finance.db")
+    os.remove(f"{os.getenv("ROOT_DIRECTORY")}/db/finance.db")
     print(1)

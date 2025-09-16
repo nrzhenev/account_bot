@@ -4,12 +4,16 @@ import sqlite3
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 import pandas as pd
+import os
+from dotenv import load_dotenv
 
 from db_modules.interface import ProductRepositoryInterface, ProductChangesRepositoryInterface, DebtsRepositoryInterface
 from domain.product import ProductWithPrice, Product, PosterIngredient
 
 
-LOCAL_DB_NAME = "/home/nikita/git/account_bot/db/finance.db"
+load_dotenv()
+root_directory = os.getenv("ROOT_DIRECTORY")
+LOCAL_DB_NAME = f"{root_directory}/db/finance.db"
 
 
 class DataBase:

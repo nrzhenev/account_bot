@@ -1,8 +1,13 @@
 import json
+import os
+from dotenv import load_dotenv
 
 import requests
 
-from credentials import POS
+
+load_dotenv()
+POS = os.getenv("POS")
+
 
 def pos_request(url, **kwargs):
     kwargs["token"] = POS

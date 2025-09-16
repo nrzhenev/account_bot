@@ -1,12 +1,16 @@
 from typing import List
+import os
+from dotenv import load_dotenv
 
 import aiohttp
 import asyncio
 from datetime import datetime
 
-from credentials import POSTER_TOKEN
 from poster_storage import PosterStorage, ProductIncrement
 
+
+load_dotenv()
+POSTER_TOKEN = os.getenv("POSTER_TOKEN")
 
 INGREDIENTS_IDS = {'Absolut Vodka': '55',
                    'Angostura': '56',

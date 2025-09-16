@@ -1,10 +1,12 @@
 import json
 from typing import List
+from dotenv import load_dotenv
+import os
 
 import requests
 
-from credentials import POS
-
+load_dotenv()
+POS = os.getenv("POS")
 
 def _poster_request(url, **kwargs):
     kwargs["token"] = POS

@@ -1,14 +1,17 @@
 """ Работа с расходами — их добавление, удаление, статистики"""
 from typing import NamedTuple, Optional, Dict
+import os
+from dotenv import load_dotenv
 
 import regex as re
-
 from datetime import datetime
 from typing import List
 
 import aiohttp
 
-from credentials import POSTER_TOKEN
+
+load_dotenv()
+POSTER_TOKEN = os.getenv("POSTER_TOKEN")
 
 
 async def read(command: str):
