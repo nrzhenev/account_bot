@@ -7,7 +7,6 @@ import pandas as pd
 
 from db_modules.interface import ProductRepositoryInterface, ProductChangesRepositoryInterface, DebtsRepositoryInterface
 from domain.product import ProductWithPrice, Product, PosterIngredient
-from domain.money_actor import MoneyActor
 
 
 LOCAL_DB_NAME = "/home/nikita/git/account_bot/db/finance.db"
@@ -78,8 +77,6 @@ class DataBase:
             sql = f.read()
         self.cursor.executescript(sql)
         self.conn.commit()
-
-        self._pre_initialize_products()
 
     def _pre_initialize_products(self):
         df = pd.read_excel('data/preinitialization.xlsx', sheet_name="poster_ingredients")
@@ -227,19 +224,20 @@ class DebtsRepository(DebtsRepositoryInterface):
     def __init__(self, data_base):
         self.db = data_base
 
-    def get_by_name(self, name: str) -> Optional[MoneyActor]:
-        cursor = self.db.cursor
-        cursor.execute(
-            "select d.company_name, d.amount from debts d where d.company_name = (?)",
-            (name,))
-        result = cursor.fetchone()
-        if not result:
-            return
-
-        company_name, amount = result
-        if not (company_name and amount):
-            return
-        return MoneyActor(0, company_name, amount)
+    def get_by_name(self, name: str) -> Optional:
+        pass
+        # cursor = self.db.cursor
+        # cursor.execute(
+        #     "select d.company_name, d.amount from debts d where d.company_name = (?)",
+        #     (name,))
+        # result = cursor.fetchone()
+        # if not result:
+        #     return
+        #
+        # company_name, amount = result
+        # if not (company_name and amount):
+        #     return
+        # return MoneyActor(0, company_name, amount)
 
     def set(self, name: str, amount: float):
         self.db.insert("debts",
